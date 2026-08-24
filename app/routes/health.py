@@ -27,7 +27,10 @@ async def debug():
     redis_url_set = bool(settings.redis_url)
     db = get_db()
     db_ok = db is not None
+    import os
+    raw_envs = {k: v[:30] for k, v in os.environ.items() if 'SUPABASE' in k or 'REDIS' in k or 'LEMON' in k or k == 'ENV'}
     return {
+        'raw_envs': raw_envs,
         "env": settings.env,
         "supabase_url_set": supabase_url_set,
         "supabase_url_prefix": settings.supabase_url[:30] if settings.supabase_url else "",

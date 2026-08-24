@@ -41,3 +41,44 @@ async def debug():
         "db_type": str(type(db)) if db else "None",
         "db_error": get_last_error(),
     }
+
+
+@router.get("/test-db")
+async def test_db():
+    """测试数据库表访问。"""
+    db = get_db()
+    if db is None:
+        return {"error": "Database not connected", "detail": get_last_error()}
+
+    results = {}
+    for table in ["users", "api_keys", "api_usage", "payments", "jobs"]:
+        try:
+            resp = db.table(table).select("*").limit(1).execute()
+            results[table] = {"ok": True, "rows": len(resp.data), "data": resp.data[:1]}
+        except Exception as e:
+            results[table] = {"ok": False, "error": str(e)}
+
+    # Try a raw insert into users
+    try:
+        import hashlib, secrets
+        test_email = f"probe_{secrets.token_hex(4)}@test.dev"
+        password_hash = hashlib.sha256(("test" + "dataclean_salt_2024").encode()).hexdigest()
+        resp = db.table("users").insert({
+            "email": test_email,
+            "password_hash": password_hash,
+            "name": "Probe",
+            "plan": "free",
+            "credits_remaining": 1000,
+            "credits_total": 1000,
+            "is_active": True,
+        }).execute()
+        results["insert_test"] = {"ok": True, "data": resp.data[:1]} if resp.data else {"ok": False, "error": "No data returned"}
+        # Clean up
+        if resp.data:
+            db.table("users").delete().eq("id", resp.data[0]["id"]).execute()
+            results["insert_test"]["cleanup"] = "done"
+    except Exception as e:
+        results["insert_test"] = {"ok": False, "error": str(e)}
+
+    return results
+

@@ -101,3 +101,15 @@ CREATE POLICY "service_role_all_jobs" ON jobs FOR ALL USING (auth.role() = 'serv
 -- 如果users表已存在但没有auth_token字段，添加它
 ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_token TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS lemonsqueezy_customer_id TEXT;
+
+-- 修复字段不匹配（如果表已存在但缺字段）
+ALTER TABLE api_usage ADD COLUMN IF NOT EXISTS processing_time_ms INTEGER;
+ALTER TABLE api_usage ADD COLUMN IF NOT EXISTS status TEXT;
+ALTER TABLE api_usage ADD COLUMN IF NOT EXISTS error_message TEXT;
+
+-- jobs表字段修复
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS input_size INTEGER;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS output_size INTEGER;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS result_url TEXT;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS error_message TEXT;
+

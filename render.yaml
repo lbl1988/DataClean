@@ -1,13 +1,10 @@
 services:
   - type: web
     name: dataclean-api
-    runtime: python
+    runtime: docker
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 2
+    dockerfilePath: ./Dockerfile
     envVars:
-      - key: PYTHON_VERSION
-        value: "3.11.0"
       - key: ENV
         value: production
       - key: SUPABASE_URL
@@ -27,5 +24,5 @@ services:
       - key: API_KEY_SECRET
         generateValue: true
       - key: CORS_ORIGINS
-        value: "https://yourdomain.com"
+        value: "*"
     healthCheckPath: /health

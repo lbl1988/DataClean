@@ -22,8 +22,11 @@ def get_db():
             settings.supabase_url,
             settings.supabase_service_key,
         )
-    except Exception:
-        pass
+    except Exception as e:
+        import logging
+        logging.error(f"Supabase init failed: {e}")
+        print(f"Supabase init failed: {e}")
+        _client = None
 
     return _client
 

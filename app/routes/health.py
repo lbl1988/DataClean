@@ -4,7 +4,7 @@ from typing import Optional
 
 from ..models.schemas import HealthResponse
 from ..config import settings
-from ..db.database import get_db
+from ..db.database import get_db, get_last_error
 
 router = APIRouter()
 
@@ -39,4 +39,5 @@ async def debug():
         "redis_url_set": redis_url_set,
         "db_connected": db_ok,
         "db_type": str(type(db)) if db else "None",
+        "db_error": get_last_error(),
     }

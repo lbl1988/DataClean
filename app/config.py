@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     api_key_secret: str = "change-this"
     cors_origins: str = "http://localhost:3000"
 
-    model_config = {"no_env_file": ".env", "no_env_file_encoding": "utf-8"}
+    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
 
 settings = Settings()

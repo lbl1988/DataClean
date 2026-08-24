@@ -131,8 +131,18 @@ class DataCleanAPI {
 
   async _handleApiResponse(resp) {
     if (!resp.ok) {
-      const err = await resp.json().catch(() => ({ detail: resp.statusText }));
-      throw new Error(err.detail || `API error (${resp.status})`);
+      let msg = `API error (${resp.status})`;
+      try {
+        const err = await resp.json();
+        if (typeof err.detail === 'string') {
+          msg = err.detail;
+        } else if (Array.isArray(err.detail)) {
+          msg = err.detail.map(e => e.msg || JSON.stringify(e)).join('; ');
+        } else if (err.detail) {
+          msg = JSON.stringify(err.detail);
+        }
+      } catch {}
+      throw new Error(msg);
     }
     return resp.json();
   }

@@ -149,6 +149,19 @@ resp = requests.post(<span class="s">"</span><span id="apiUrl">/v1/dedup</span><
         <div class="dash-header">
           <h1>API Playground</h1>
         </div>
+        <div class="card" id="apiKeyPrompt" style="display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+            <div>
+              <div style="font-size:15px;font-weight:600;margin-bottom:4px">需要设置 API Key</div>
+              <div style="font-size:13px;color:var(--text-secondary)">输入你的 API Key 或创建新 Key 来使用 Playground</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="text" id="manualApiKey" placeholder="dk_live_xxxxxxxx" style="padding:8px 12px;border-radius:8px;background:var(--bg-dark);border:1px solid var(--border);color:var(--text-primary);font-size:13px;width:240px">
+              <button class="btn btn-primary" onclick="setManualKey()">使用</button>
+              <button class="btn btn-outline" onclick="showCreateKeyModal()">创建新 Key</button>
+            </div>
+          </div>
+        </div>
         <div class="tabs">
           <div class="tab active" onclick="switchPlayground('dedup', this)">去重</div>
           <div class="tab" onclick="switchPlayground('standardize', this)">标准化</div>
@@ -340,12 +353,12 @@ function handleLogout() {
 }
 
 // Dashboard
-function showDashboard(user) {
+async function showDashboard(user) {
   document.getElementById('authModal').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
   document.getElementById('apiUrl').textContent = location.origin + '/v1/dedup';
   loadOverview(user);
-  loadKeys();
+  await loadKeys();
 }
 
 async function loadOverview(user) {
@@ -371,7 +384,7 @@ function showTab(name) {
   document.getElementById('nav-' + name).classList.add('active');
   if (name === 'overview') loadOverview(api.user);
   if (name === 'keys') loadKeys();
-  if (name === 'playground') initPlayground();
+  if (name === 'playground') { checkApiKey(); initPlayground(); }
 }
 
 // API Keys
@@ -423,6 +436,7 @@ async function createKey(event) {
     document.getElementById('newKeyValue').value = data.api_key;
     document.getElementById('keyResultModal').style.display = 'flex';
     api.setActiveKey(data.api_key);
+    document.getElementById('apiKeyPrompt').style.display = 'none';
     showToast('API Key 创建成功');
   } catch (e) {
     showToast(e.message, 'error');
@@ -450,7 +464,25 @@ async function revokeKey(keyId) {
 
 // Playground
 function initPlayground() {
+  checkApiKey();
   switchPlayground('dedup', document.querySelector('.tab'));
+}
+
+function checkApiKey() {
+  const prompt = document.getElementById('apiKeyPrompt');
+  if (api._getApiKey()) {
+    prompt.style.display = 'none';
+  } else {
+    prompt.style.display = 'block';
+  }
+}
+
+function setManualKey() {
+  const key = document.getElementById('manualApiKey').value.trim();
+  if (!key) { showToast('请输入 API Key', 'error'); return; }
+  api.setActiveKey(key);
+  document.getElementById('apiKeyPrompt').style.display = 'none';
+  showToast('API Key 已设置');
 }
 
 function switchPlayground(type, el) {
@@ -517,6 +549,13 @@ function switchPlayground(type, el) {
 
 async function runPlayground() {
   const resultDiv = document.getElementById('playgroundResult');
+
+  if (!api._getApiKey()) {
+    resultDiv.textContent = '请先设置 API Key（在上方输入框输入或创建新 Key）';
+    document.getElementById('apiKeyPrompt').style.display = 'block';
+    return;
+  }
+
   resultDiv.textContent = '运行中...';
 
   try {

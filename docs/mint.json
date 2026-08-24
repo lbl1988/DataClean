@@ -1,0 +1,31 @@
+{
+  "name": "DataClean API",
+  "logo": {"src": "/logo.png", "dark": "/logo-dark.png"},
+  "favicon": "/favicon.ico",
+  "colors": {
+    "primary": "#818cf8",
+    "light": "#a5b4fc",
+    "dark": "#6366f1"
+  },
+  "topbarCtaButton": {
+    "type": "github",
+    "url": "https://github.com/yourusername/dataclean-api"
+  },
+  "topbarLinks": [
+    {"name": "Dashboard", "url": "https://yourdomain.com/dashboard"}
+  ],
+  "navigation": [
+    {
+      "group": "开始",
+      "pages": ["introduction", "quickstart"]
+    },
+    {
+      "group": "API参考",
+      "pages": ["api-reference/dedup", "api-reference/standardize", "api-reference/clean"]
+    },
+    {
+      "group": "指南",
+      "pages": ["pricing", "errors"]
+    }
+  ]
+}

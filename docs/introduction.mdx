@@ -1,0 +1,40 @@
+---
+title: 介绍
+description: DataClean API — 数据清洗API服务
+---
+
+# DataClean API
+
+DataClean API 是一个数据清洗服务，提供去重、标准化、验证三大功能。
+
+## 核心功能
+
+- **批量去重** — 支持精确去重（MD5哈希）和模糊去重（SimHash + Levenshtein），匹配前自动标准化
+- **数据标准化** — 电话、邮箱、地址、日期的自动格式统一
+- **邮箱验证** — 格式校验 + MX记录检测 + 一次性邮箱检测
+- **一键清洗** — 标准化 → 验证 → 去重全流程，附带数据质量报告
+
+## 为什么选择DataClean
+
+- **API优先** — 不需要安装软件，一个HTTP请求搞定
+- **按量计费** — 用多少付多少，免费层1000条/月
+- **零安装** — 没有SDK依赖，curl就能用
+- **模糊匹配** — 不只是完全匹配，格式不同的重复数据也能识别
+
+## 快速开始
+
+```bash
+curl -X POST https://your-api-domain.com/v1/dedup \
+  -H "X-API-Key: dk_live_your_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "records": [
+      {"id": 1, "email": "ZhangSan@Gmail.com", "phone": "138-1234-5678"},
+      {"id": 2, "email": "zhangsan@gmail.com", "phone": "13812345678"}
+    ],
+    "match_fields": ["email", "phone"],
+    "match_mode": "fuzzy"
+  }'
+```
+
+参考 [快速开始指南](/quickstart) 5分钟跑通第一次调用。

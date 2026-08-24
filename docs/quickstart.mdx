@@ -1,0 +1,95 @@
+---
+title: 快速开始
+description: 5分钟跑通第一次API调用
+---
+
+# 快速开始
+
+## 1. 获取API Key
+
+注册账号后，在 [控制台](https://yourdomain.com/dashboard) 创建API Key。
+
+你的Key格式为 `dk_live_xxxxx`，请妥善保存。
+
+## 2. 第一次调用
+
+### Python
+
+```python
+import requests
+
+response = requests.post(
+    "https://your-api-domain.com/v1/dedup",
+    headers={"X-API-Key": "dk_live_your_key"},
+    json={
+        "records": [
+            {"id": 1, "email": "ZhangSan@Gmail.com", "phone": "138-1234-5678"},
+            {"id": 2, "email": "zhangsan@gmail.com", "phone": "13812345678"},
+        ],
+        "match_fields": ["email", "phone"],
+        "match_mode": "fuzzy",
+    },
+)
+print(response.json())
+```
+
+### curl
+
+```bash
+curl -X POST https://your-api-domain.com/v1/dedup \
+  -H "X-API-Key: dk_live_your_key" \
+  -H "Content-Type: application/json" \
+  -d '{"records":[{"id":1,"email":"ZhangSan@Gmail.com","phone":"138-1234-5678"},{"id":2,"email":"zhangsan@gmail.com","phone":"13812345678"}],"match_fields":["email","phone"],"match_mode":"fuzzy"}'
+```
+
+### JavaScript
+
+```javascript
+const res = await fetch("https://your-api-domain.com/v1/dedup", {
+  method: "POST",
+  headers: { "X-API-Key": "dk_live_your_key", "Content-Type": "application/json" },
+  body: JSON.stringify({
+    records: [
+      { id: 1, email: "ZhangSan@Gmail.com", phone: "138-1234-5678" },
+      { id: 2, email: "zhangsan@gmail.com", phone: "13812345678" },
+    ],
+    match_fields: ["email", "phone"],
+    match_mode: "fuzzy",
+  }),
+});
+const data = await res.json();
+console.log(data);
+```
+
+## 3. 响应示例
+
+```json
+{
+  "status": "success",
+  "total_records": 2,
+  "unique_count": 1,
+  "duplicate_count": 1,
+  "duplicate_groups": [
+    {
+      "group_id": 1,
+      "master_id": 1,
+      "duplicate_ids": [2],
+      "similarity_score": 0.92,
+      "match_reason": "fuzzy_match_0.92"
+    }
+  ],
+  "deduplicated_records": [
+    {"id": 1, "email": "zhangsan@gmail.com", "phone": "13812345678"}
+  ],
+  "removed_ids": [2],
+  "credits_used": 2,
+  "processing_time_ms": 45
+}
+```
+
+## 4. 下一步
+
+- [批量去重API文档](/api-reference/dedup) — 了解精确/模糊去重参数
+- [标准化API文档](/api-reference/standardize) — 电话/邮箱/地址标准化
+- [一键清洗API文档](/api-reference/clean) — 全流程清洗+质量报告
+- [定价](/pricing) — 免费层1000条/月，付费$19起

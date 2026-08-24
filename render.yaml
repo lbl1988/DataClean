@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: dataclean-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 2
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+      - key: ENV
+        value: production
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: LEMONSQUEEZY_API_KEY
+        sync: false
+      - key: LEMONSQUEEZY_WEBHOOK_SECRET
+        sync: false
+      - key: LEMONSQUEEZY_STORE_ID
+        sync: false
+      - key: API_KEY_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: "https://yourdomain.com"
+    healthCheckPath: /health

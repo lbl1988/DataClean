@@ -19,6 +19,9 @@ python-dateutil==2.9.0.post0
 # DNS (MX记录查询)
 dnspython==2.6.1
 
+# 邮箱验证
+email-validator==2.2.0
+
 # 测试
 pytest==8.3.3
 pytest-asyncio==0.24.0

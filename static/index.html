@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DataClean — 数据清洗 API 服务</title>
+  <meta name="description" content="数据去重、标准化、验证一站式 API。支持精确去重、模糊匹配、电话邮箱地址标准化。">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236366F1' stroke-width='2'><path d='M3 6h18M3 12h18M3 18h18'/></svg>">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="/" class="nav-logo">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+    </svg>
+    <span>DataClean</span>
+  </a>
+  <div class="nav-links">
+    <a href="#features">功能</a>
+    <a href="#how">原理</a>
+    <a href="#pricing">定价</a>
+    <a href="/docs">API 文档</a>
+    <a href="/dashboard" class="btn btn-outline" style="padding:6px 16px">登录</a>
+    <a href="/dashboard" class="btn btn-primary" style="padding:6px 16px" onclick="localStorage.setItem('dc_show_register','1')">免费注册</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <h1>数据清洗 <span class="gradient">一键搞定</span></h1>
+  <p>去重 · 标准化 · 验证 — RESTful API，3 行代码集成，按量付费，免费 1000 次调用</p>
+  <div class="hero-cta">
+    <a href="/dashboard" class="btn btn-primary" style="padding:12px 28px" onclick="localStorage.setItem('dc_show_register','1')">免费开始 →</a>
+    <a href="/docs" class="btn btn-outline" style="padding:12px 28px">查看 API 文档</a>
+  </div>
+</section>
+
+<section class="section" id="features">
+  <div class="container">
+    <div class="section-title">
+      <h2>核心功能</h2>
+      <p>覆盖数据清洗全流程，一个 API 搞定</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🎯</div>
+        <h3>精确去重</h3>
+        <p>MD5 哈希比对，指定字段组合匹配，毫秒级处理，100% 精确</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔮</div>
+        <h3>模糊去重</h3>
+        <p>SimHash + Levenshtein 算法，识别相似但不完全相同的数据记录</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📞</div>
+        <h3>电话标准化</h3>
+        <p>自动添加国际区号、去除分隔符、统一格式为 E.164 标准</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">✉️</div>
+        <h3>邮箱验证</h3>
+        <p>语法检查 + 域名 MX 记录查询，识别无效和临时邮箱</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📍</div>
+        <h3>地址标准化</h3>
+        <p>省市统一、去除冗余空格、规范缩写，支持中国地址格式</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3>一键全流程</h3>
+        <p>去重 + 标准化 + 验证一条龙，一个 API 调用完成全部清洗</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="how" style="background:rgba(30,41,59,0.3)">
+  <div class="container">
+    <div class="section-title">
+      <h2>3 步集成</h2>
+      <p>无需安装，无需配置，直接调用</p>
+    </div>
+    <div style="max-width:720px;margin:0 auto">
+      <div class="code-block">
+<span class="c"># 1. 注册账号，获取 API Key</span>
+<span class="k">import</span> requests
+
+API_KEY = <span class="s">"dk_live_xxxxxxxxxxxx"</span>
+headers = {<span class="s">"X-API-Key"</span>: API_KEY, <span class="s">"Content-Type"</span>: <span class="s">"application/json"</span>}
+
+<span class="c"># 2. 调用去重 API</span>
+data = {
+    <span class="s">"records"</span>: [
+        {<span class="s">"id"</span>: <span class="n">1</span>, <span class="s">"email"</span>: <span class="s">"a@test.com"</span>, <span class="s">"phone"</span>: <span class="s">"13800138000"</span>},
+        {<span class="s">"id"</span>: <span class="n">2</span>, <span class="s">"email"</span>: <span class="s">"a@test.com"</span>, <span class="s">"phone"</span>: <span class="s">"13800138000"</span>},
+    ],
+    <span class="s">"match_fields"</span>: [<span class="s">"email"</span>, <span class="s">"phone"</span>],
+    <span class="s">"match_mode"</span>: <span class="s">"exact"</span>
+}
+resp = requests.post(<span class="s">"https://dataclean-x4jc.onrender.com/v1/dedup"</span>,
+                     json=data, headers=headers)
+
+<span class="c"># 3. 获取清洗结果</span>
+result = resp.json()
+<span class="f">print</span>(<span class="f">f</span><span class="s">"输入 </span>{result['total_records']}<span class="s"> 条 → 输出 </span>{result['unique_count']}<span class="s"> 条 (移除 </span>{result['duplicates_removed']}<span class="s"> 条重复)"</span>)
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="pricing">
+  <div class="container">
+    <div class="section-title">
+      <h2>简单定价</h2>
+      <p>按量付费，无月费，用多少算多少</p>
+    </div>
+    <div class="pricing-grid">
+      <div class="pricing-card">
+        <h3>Free</h3>
+        <div class="price">¥0<span>/月</span></div>
+        <ul>
+          <li>1,000 次免费调用</li>
+          <li>2 QPS 限流</li>
+          <li>全部清洗功能</li>
+          <li>社区支持</li>
+        </ul>
+        <a href="/dashboard" class="btn btn-outline" style="width:100%" onclick="localStorage.setItem('dc_show_register','1')">免费注册</a>
+      </div>
+      <div class="pricing-card featured">
+        <h3>Pro</h3>
+        <div class="price">¥49<span>/10K次</span></div>
+        <ul>
+          <li>10,000 次调用</li>
+          <li>30 QPS 限流</li>
+          <li>全部清洗功能</li>
+          <li>邮件支持</li>
+          <li>用量统计</li>
+        </ul>
+        <a href="/dashboard" class="btn btn-primary" style="width:100%" onclick="localStorage.setItem('dc_show_register','1')">立即购买</a>
+      </div>
+      <div class="pricing-card">
+        <h3>Enterprise</h3>
+        <div class="price">¥399<span>/月</span></div>
+        <ul>
+          <li>200,000 次调用/月</li>
+          <li>100 QPS 限流</li>
+          <li>优先技术支持</li>
+          <li>SLA 保障</li>
+          <li>私有部署可选</li>
+        </ul>
+        <a href="mailto:business@dataclean.dev" class="btn btn-outline" style="width:100%">联系销售</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="text-align:center">
+  <div class="container">
+    <h2 style="font-size:32px;font-weight:700;margin-bottom:12px">准备好开始了吗？</h2>
+    <p style="color:var(--text-secondary);margin-bottom:32px">注册即送 1,000 次免费调用，无需信用卡</p>
+    <a href="/dashboard" class="btn btn-primary" style="padding:14px 32px;font-size:16px" onclick="localStorage.setItem('dc_show_register','1')">免费注册 →</a>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <p>DataClean API — 数据清洗服务 · © 2026 · <a href="/docs" style="color:var(--primary-light)">API 文档</a> · <a href="/dashboard" style="color:var(--primary-light)">控制台</a></p>
+  </div>
+</footer>
+
+</body>
+</html>

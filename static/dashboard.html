@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DataClean — 控制台</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236366F1' stroke-width='2'><path d='M3 6h18M3 12h18M3 18h18'/></svg>">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/api.js"></script>
+</head>
+<body>
+
+<!-- Auth Modal -->
+<div id="authModal" class="modal-overlay" style="display:none">
+  <div class="modal">
+    <h2 id="authTitle">登录</h2>
+    <p id="authSubtitle">登录到 DataClean 控制台</p>
+    <form id="authForm" onsubmit="return handleAuth(event)">
+      <div class="form-group" id="nameGroup" style="display:none">
+        <label>姓名</label>
+        <input type="text" id="authName" placeholder="你的名字" autocomplete="name">
+      </div>
+      <div class="form-group">
+        <label>邮箱</label>
+        <input type="email" id="authEmail" placeholder="you@example.com" required autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label>密码</label>
+        <input type="password" id="authPassword" placeholder="至少 6 位" required minlength="6" autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;margin-top:8px" id="authSubmit">登录</button>
+    </form>
+    <p style="text-align:center;margin-top:16px;font-size:14px;color:var(--text-secondary)">
+      <span id="authToggleText">没有账号？</span>
+      <a href="javascript:void(0)" onclick="toggleAuthMode()" style="color:var(--primary-light)">立即注册</a>
+    </p>
+  </div>
+</div>
+
+<!-- Dashboard Layout -->
+<div id="dashboard" style="display:none">
+  <div class="dash-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <a href="/" style="display:flex;align-items:center;gap:8px">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+          </svg>
+          <span>DataClean</span>
+        </a>
+      </div>
+      <nav class="sidebar-nav">
+        <a class="active" onclick="showTab('overview')" id="nav-overview">
+          <span class="icon">📊</span> 概览
+        </a>
+        <a onclick="showTab('keys')" id="nav-keys">
+          <span class="icon">🔑</span> API Key
+        </a>
+        <a onclick="showTab('playground')" id="nav-playground">
+          <span class="icon">🧪</span> Playground
+        </a>
+        <a onclick="showTab('billing')" id="nav-billing">
+          <span class="icon">💳</span> 计费
+        </a>
+      </nav>
+      <div class="sidebar-user">
+        <div class="sidebar-user-info">
+          <div class="email" id="userEmail">—</div>
+          <div class="plan" id="userPlan">—</div>
+        </div>
+        <a onclick="handleLogout()" style="color:var(--danger);font-size:13px;padding:4px 12px">退出登录</a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dash-main">
+      <!-- Overview Tab -->
+      <div class="tab-content active" id="tab-overview">
+        <div class="dash-header">
+          <h1>概览</h1>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="label">剩余额度</div>
+            <div class="value" id="statCredits">—</div>
+            <div class="change up" id="statCreditsTotal">总计 —</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">当前套餐</div>
+            <div class="value" id="statPlan">—</div>
+            <div class="change" id="statPlanDetail">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">API Key 数量</div>
+            <div class="value" id="statKeys">—</div>
+            <div class="change up">个活跃 Key</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">QPS 限制</div>
+            <div class="value" id="statQps">—</div>
+            <div class="change">次/秒</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>快速开始</h2>
+          </div>
+          <div class="code-block">
+<span class="c"># 使用你的 API Key 调用去重 API</span>
+<span class="k">import</span> requests
+
+headers = {
+    <span class="s">"X-API-Key"</span>: <span class="s">"你的_API_KEY"</span>,
+    <span class="s">"Content-Type"</span>: <span class="s">"application/json"</span>
+}
+
+data = {
+    <span class="s">"records"</span>: [
+        {<span class="s">"id"</span>: <span class="n">1</span>, <span class="s">"email"</span>: <span class="s">"a@test.com"</span>},
+        {<span class="s">"id"</span>: <span class="n">2</span>, <span class="s">"email"</span>: <span class="s">"a@test.com"</span>},
+    ],
+    <span class="s">"match_fields"</span>: [<span class="s">"email"</span>],
+    <span class="s">"match_mode"</span>: <span class="s">"exact"</span>
+}
+
+resp = requests.post(<span class="s">"</span><span id="apiUrl">/v1/dedup</span><span class="s">"</span>, json=data, headers=headers)
+<span class="f">print</span>(resp.json())
+          </div>
+        </div>
+      </div>
+
+      <!-- API Keys Tab -->
+      <div class="tab-content" id="tab-keys">
+        <div class="dash-header">
+          <h1>API Key 管理</h1>
+          <button class="btn btn-primary" onclick="showCreateKeyModal()">+ 创建 API Key</button>
+        </div>
+        <div class="card">
+          <div id="keysList">
+            <div class="loading"><div class="spinner"></div> 加载中...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Playground Tab -->
+      <div class="tab-content" id="tab-playground">
+        <div class="dash-header">
+          <h1>API Playground</h1>
+        </div>
+        <div class="tabs">
+          <div class="tab active" onclick="switchPlayground('dedup', this)">去重</div>
+          <div class="tab" onclick="switchPlayground('standardize', this)">标准化</div>
+          <div class="tab" onclick="switchPlayground('clean', this)">全流程清洗</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+          <div>
+            <div class="form-group">
+              <label>输入数据 (JSON)</label>
+              <textarea id="playgroundInput" class="playground-input" placeholder='[
+  {"id": 1, "email": "a@test.com", "phone": "13800138000"},
+  {"id": 2, "email": "a@test.com", "phone": "13800138000"},
+  {"id": 3, "email": "b@test.com", "phone": "13900139000"}
+]'></textarea>
+            </div>
+            <div id="playgroundOptions"></div>
+            <button class="btn btn-primary" onclick="runPlayground()" style="width:100%;margin-top:8px">▶ 运行</button>
+          </div>
+          <div>
+            <div class="form-group">
+              <label>输出结果</label>
+              <div id="playgroundResult" class="playground-result">
+点击 "运行" 查看结果...
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Billing Tab -->
+      <div class="tab-content" id="tab-billing">
+        <div class="dash-header">
+          <h1>计费管理</h1>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="label">当前套餐</div>
+            <div class="value" id="billingPlan">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">剩余额度</div>
+            <div class="value" id="billingCredits">—</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2>购买额度</h2></div>
+          <div class="pricing-grid" style="margin-top:0">
+            <div class="pricing-card">
+              <h3>Pro 包</h3>
+              <div class="price">¥49<span>/10K次</span></div>
+              <ul>
+                <li>10,000 次调用</li>
+                <li>30 QPS 限流</li>
+                <li>即时生效</li>
+              </ul>
+              <button class="btn btn-primary" style="width:100%" onclick="buyCredits('pro')">购买</button>
+            </div>
+            <div class="pricing-card featured">
+              <h3>Business 包</h3>
+              <div class="price">¥199<span>/50K次</span></div>
+              <ul>
+                <li>50,000 次调用</li>
+                <li>50 QPS 限流</li>
+                <li>优先支持</li>
+              </ul>
+              <button class="btn btn-primary" style="width:100%" onclick="buyCredits('business')">购买</button>
+            </div>
+            <div class="pricing-card">
+              <h3>Enterprise 包</h3>
+              <div class="price">¥399<span>/200K次</span></div>
+              <ul>
+                <li>200,000 次调用</li>
+                <li>100 QPS 限流</li>
+                <li>SLA 保障</li>
+              </ul>
+              <button class="btn btn-primary" style="width:100%" onclick="buyCredits('enterprise')">购买</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Create Key Modal -->
+<div id="createKeyModal" class="modal-overlay" style="display:none">
+  <div class="modal">
+    <h2>创建 API Key</h2>
+    <p>为你的应用生成一个新的 API Key</p>
+    <form onsubmit="return createKey(event)">
+      <div class="form-group">
+        <label>Key 名称</label>
+        <input type="text" id="keyName" placeholder="例如：生产环境 / 测试环境" required>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%">生成 Key</button>
+    </form>
+  </div>
+</div>
+
+<!-- New Key Result Modal -->
+<div id="keyResultModal" class="modal-overlay" style="display:none">
+  <div class="modal">
+    <h2>API Key 已生成</h2>
+    <p>请妥善保管以下 Key，它只会显示一次：</p>
+    <div class="form-group">
+      <textarea id="newKeyValue" readonly style="font-family:'SF Mono',monospace;font-size:13px;min-height:60px;background:#0D1117"></textarea>
+    </div>
+    <button class="btn btn-primary" style="width:100%" onclick="copyNewKey()">复制 Key</button>
+    <p style="text-align:center;margin-top:12px;font-size:13px;color:var(--warning)">⚠ 关闭后无法再次查看</p>
+    <button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="document.getElementById('keyResultModal').style.display='none';refreshKeys()">完成</button>
+  </div>
+</div>
+
+<script>
+let authMode = 'login';
+let currentPlayground = 'dedup';
+
+// Auth flow
+async function init() {
+  if (api.isLoggedIn()) {
+    const user = await api.getMe();
+    if (user) {
+      showDashboard(user);
+      return;
+    }
+  }
+  showAuthModal();
+}
+
+function showAuthModal() {
+  const showRegister = localStorage.getItem('dc_show_register') === '1';
+  if (showRegister) {
+    authMode = 'register';
+    localStorage.removeItem('dc_show_register');
+  } else {
+    authMode = 'login';
+  }
+  updateAuthMode();
+  document.getElementById('authModal').style.display = 'flex';
+}
+
+function toggleAuthMode() {
+  authMode = authMode === 'login' ? 'register' : 'login';
+  updateAuthMode();
+}
+
+function updateAuthMode() {
+  const isRegister = authMode === 'register';
+  document.getElementById('authTitle').textContent = isRegister ? '注册' : '登录';
+  document.getElementById('authSubtitle').textContent = isRegister ? '创建 DataClean 账号' : '登录到 DataClean 控制台';
+  document.getElementById('nameGroup').style.display = isRegister ? 'block' : 'none';
+  document.getElementById('authSubmit').textContent = isRegister ? '注册' : '登录';
+  document.getElementById('authToggleText').textContent = isRegister ? '已有账号？' : '没有账号？';
+  document.querySelector('#authToggleText + a').textContent = isRegister ? '去登录' : '立即注册';
+}
+
+async function handleAuth(event) {
+  event.preventDefault();
+  const email = document.getElementById('authEmail').value;
+  const password = document.getElementById('authPassword').value;
+  const name = document.getElementById('authName').value;
+  const btn = document.getElementById('authSubmit');
+  btn.textContent = '处理中...'; btn.disabled = true;
+  try {
+    let data;
+    if (authMode === 'register') {
+      data = await api.register(email, password, name || email.split('@')[0]);
+      showToast('注册成功！已获得 1,000 次免费额度');
+    } else {
+      data = await api.login(email, password);
+      showToast('登录成功');
+    }
+    document.getElementById('authModal').style.display = 'none';
+    const user = await api.getMe();
+    showDashboard(user);
+  } catch (e) {
+    showToast(e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    updateAuthMode();
+  }
+  return false;
+}
+
+function handleLogout() {
+  api.logout();
+  location.reload();
+}
+
+// Dashboard
+function showDashboard(user) {
+  document.getElementById('authModal').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  document.getElementById('apiUrl').textContent = location.origin + '/v1/dedup';
+  loadOverview(user);
+  loadKeys();
+}
+
+async function loadOverview(user) {
+  if (user) {
+    document.getElementById('userEmail').textContent = user.email || '—';
+    document.getElementById('userPlan').textContent = (user.plan || 'free').toUpperCase() + ' 套餐';
+    document.getElementById('statCredits').textContent = (user.credits_remaining ?? 0).toLocaleString();
+    document.getElementById('statCreditsTotal').textContent = '总计 ' + (user.credits_total ?? 0).toLocaleString();
+    const planMap = { free: '免费版', pro: 'Pro 版', business: 'Business 版', enterprise: 'Enterprise 版' };
+    document.getElementById('statPlan').textContent = planMap[user.plan] || user.plan || '—';
+    const qpsMap = { free: 2, pro: 30, business: 50, enterprise: 100 };
+    document.getElementById('statQps').textContent = qpsMap[user.plan] || 2;
+    document.getElementById('billingPlan').textContent = planMap[user.plan] || user.plan || '—';
+    document.getElementById('billingCredits').textContent = (user.credits_remaining ?? 0).toLocaleString();
+  }
+}
+
+// Tab switching
+function showTab(name) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelectorAll('.sidebar-nav a').forEach(el => el.classList.remove('active'));
+  document.getElementById('nav-' + name).classList.add('active');
+  if (name === 'overview') loadOverview(api.user);
+  if (name === 'keys') loadKeys();
+  if (name === 'playground') initPlayground();
+}
+
+// API Keys
+async function loadKeys() {
+  try {
+    const keys = await api.getKeys();
+    renderKeys(keys);
+    document.getElementById('statKeys').textContent = keys.filter(k => k.is_active).length;
+  } catch (e) {
+    document.getElementById('keysList').innerHTML = '<div class="empty-state"><div class="icon">⚠</div>加载失败: ' + e.message + '</div>';
+  }
+}
+
+function renderKeys(keys) {
+  if (!keys || keys.length === 0) {
+    document.getElementById('keysList').innerHTML = '<div class="empty-state"><div class="icon">🔑</div>还没有 API Key<br><button class="btn btn-primary" style="margin-top:16px" onclick="showCreateKeyModal()">创建第一个 Key</button></div>';
+    return;
+  }
+  let html = '<table><thead><tr><th>名称</th><th>Key 前缀</th><th>状态</th><th>创建时间</th><th>最后使用</th><th>操作</th></tr></thead><tbody>';
+  for (const k of keys) {
+    html += `<tr>
+      <td>${k.name || 'Default'}</td>
+      <td style="font-family:monospace;font-size:13px">${maskKey(k.key_prefix)}</td>
+      <td>${k.is_active ? '<span class="badge badge-green">活跃</span>' : '<span class="badge badge-gray">已吊销</span>'}</td>
+      <td>${formatDate(k.created_at)}</td>
+      <td>${formatDate(k.last_used_at)}</td>
+      <td>${k.is_active ? `<button class="btn btn-danger" style="padding:4px 12px;font-size:13px" onclick="revokeKey('${k.id}')">吊销</button>` : ''}</td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  document.getElementById('keysList').innerHTML = html;
+}
+
+async function refreshKeys() {
+  await loadKeys();
+}
+
+function showCreateKeyModal() {
+  document.getElementById('keyName').value = '';
+  document.getElementById('createKeyModal').style.display = 'flex';
+}
+
+async function createKey(event) {
+  event.preventDefault();
+  const name = document.getElementById('keyName').value;
+  try {
+    const data = await api.createKey(name);
+    document.getElementById('createKeyModal').style.display = 'none';
+    document.getElementById('newKeyValue').value = data.api_key;
+    document.getElementById('keyResultModal').style.display = 'flex';
+    api.setActiveKey(data.api_key);
+    showToast('API Key 创建成功');
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+  return false;
+}
+
+function copyNewKey() {
+  const input = document.getElementById('newKeyValue');
+  input.select();
+  document.execCommand('copy');
+  showToast('已复制到剪贴板');
+}
+
+async function revokeKey(keyId) {
+  if (!confirm('确定要吊销这个 API Key 吗？吊销后无法恢复。')) return;
+  try {
+    await api.revokeKey(keyId);
+    showToast('Key 已吊销');
+    await loadKeys();
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+}
+
+// Playground
+function initPlayground() {
+  switchPlayground('dedup', document.querySelector('.tab'));
+}
+
+function switchPlayground(type, el) {
+  currentPlayground = type;
+  document.querySelectorAll('.playground-input').forEach(el => {});
+  document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  const optsDiv = document.getElementById('playgroundOptions');
+  const inputDiv = document.getElementById('playgroundInput');
+
+  if (type === 'dedup') {
+    inputDiv.value = `[
+  {"id": 1, "email": "a@test.com", "phone": "13800138000"},
+  {"id": 2, "email": "a@test.com", "phone": "13800138000"},
+  {"id": 3, "email": "b@test.com", "phone": "13900139000"}
+]`;
+    optsDiv.innerHTML = `
+      <div class="form-group">
+        <label>匹配字段（逗号分隔）</label>
+        <input type="text" id="pgFields" value="email, phone">
+      </div>
+      <div class="form-group">
+        <label>匹配模式</label>
+        <select id="pgMode">
+          <option value="exact">精确去重 (Exact)</option>
+          <option value="fuzzy">模糊去重 (Fuzzy)</option>
+        </select>
+      </div>`;
+  } else if (type === 'standardize') {
+    inputDiv.value = `[
+  {"email": " John.Doe@Test.com ", "phone": "138 0013 8000"},
+  {"email": "jane@test.com", "phone": "0086-139-0013-9000"}
+]`;
+    optsDiv.innerHTML = `
+      <div class="form-group">
+        <label>标准化字段（逗号分隔）</label>
+        <input type="text" id="pgFields" value="email, phone">
+      </div>`;
+  } else if (type === 'clean') {
+    inputDiv.value = `[
+  {"id": 1, "email": " A@TEST.com ", "phone": "13800138000"},
+  {"id": 2, "email": "a@test.com", "phone": "13800138000"},
+  {"id": 3, "email": "b@test.com", "phone": "13900139000"}
+]`;
+    optsDiv.innerHTML = `
+      <div class="form-group">
+        <label>去重字段</label>
+        <input type="text" id="pgFields" value="email, phone">
+      </div>
+      <div class="form-group">
+        <label>去重模式</label>
+        <select id="pgMode">
+          <option value="exact">精确去重</option>
+          <option value="fuzzy">模糊去重</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>标准化字段</label>
+        <input type="text" id="pgStdFields" value="email, phone">
+      </div>`;
+  }
+}
+
+async function runPlayground() {
+  const resultDiv = document.getElementById('playgroundResult');
+  resultDiv.textContent = '运行中...';
+
+  try {
+    const records = JSON.parse(document.getElementById('playgroundInput').value);
+    const fields = (document.getElementById('pgFields')?.value || 'email').split(',').map(s => s.trim());
+    let result;
+
+    if (currentPlayground === 'dedup') {
+      const mode = document.getElementById('pgMode')?.value || 'exact';
+      result = await api.dedup(records, fields, mode);
+    } else if (currentPlayground === 'standardize') {
+      result = await api.standardize(records, fields);
+    } else if (currentPlayground === 'clean') {
+      const mode = document.getElementById('pgMode')?.value || 'exact';
+      const stdFields = (document.getElementById('pgStdFields')?.value || 'email').split(',').map(s => s.trim());
+      result = await api.clean(records, {
+        dedup_fields: fields,
+        dedup_mode: mode,
+        standardize_fields: stdFields
+      });
+    }
+
+    resultDiv.textContent = JSON.stringify(result, null, 2);
+    showToast('执行成功');
+  } catch (e) {
+    resultDiv.textContent = '错误: ' + e.message;
+    showToast(e.message, 'error');
+  }
+}
+
+// Billing
+async function buyCredits(plan) {
+  showToast('正在跳转到支付页面...', 'success');
+  const checkoutUrl = `${location.origin}/v1/billing/checkout?plan=${plan}&token=${api.token}`;
+  // In production, this would redirect to LemonSqueezy checkout
+  setTimeout(() => {
+    showToast('支付功能开发中，敬请期待', 'error');
+  }, 1500);
+}
+
+// Init
+init();
+</script>
+</body>
+</html>

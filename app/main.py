@@ -1,9 +1,15 @@
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 
-from .config import settings, get_cors_origins
+from .config import settings
 from .routes import dedup, standardize, clean, health, auth, api_keys
 from .billing import webhook
+
+static_dir = Path(__file__).parent.parent / "static"
 
 app = FastAPI(
     title=settings.app_name,
@@ -15,11 +21,15 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=get_cors_origins(),
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+if static_dir.exists():
+    app.mount("/css", StaticFiles(directory=static_dir / "css"), name="css")
+    app.mount("/js", StaticFiles(directory=static_dir / "js"), name="js")
 
 prefix = settings.api_prefix
 
@@ -32,8 +42,18 @@ app.include_router(clean.router, prefix=prefix, tags=["clean"])
 app.include_router(webhook.router, tags=["webhook"])
 
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 async def root():
+    return FileResponse(static_dir / "index.html")
+
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard():
+    return FileResponse(static_dir / "dashboard.html")
+
+
+@app.get("/api-info")
+async def api_info():
     return {
         "service": settings.app_name,
         "version": settings.app_version,

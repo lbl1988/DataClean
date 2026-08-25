@@ -53,16 +53,22 @@ async def checkout(plan: str = Query(...), token: str = Query(...)):
                             },
                         },
                         "product_options": {
-                            "redirect_url": f"https://dataclean-x4jc.onrender.com/dashboard?tab=billing",
+                            "redirect_url": "https://dataclean-x4jc.onrender.com/dashboard?tab=billing",
                         },
                     },
                     "relationships": {
+                        "store": {
+                            "data": {
+                                "type": "stores",
+                                "id": "458799",
+                            }
+                        },
                         "variant": {
                             "data": {
                                 "type": "variants",
                                 "id": variant_id,
                             }
-                        }
+                        },
                     },
                 }
             },

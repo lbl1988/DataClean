@@ -21,6 +21,7 @@ async def checkout(plan: str = Query(...), token: str = Query(...)):
     if not settings.lemonsqueezy_api_key:
         raise HTTPException(500, "支付服务未配置，请联系管理员")
 
+    lsq_key = settings.lemonsqueezy_api_key.strip()
     db = get_db()
     if db is None:
         raise HTTPException(500, "数据库不可用")
@@ -36,7 +37,7 @@ async def checkout(plan: str = Query(...), token: str = Query(...)):
         resp = await client.post(
             "https://api.lemonsqueezy.com/v1/checkouts",
             headers={
-                "Authorization": f"Bearer {settings.lemonsqueezy_api_key}",
+                "Authorization": f"Bearer {lsq_key}",
                 "Accept": "application/vnd.api+json",
                 "Content-Type": "application/vnd.api+json",
             },
@@ -86,7 +87,7 @@ async def test_lsq():
         if not settings.lemonsqueezy_api_key:
             return {"error": "LEMONSQUEEZY_API_KEY not set", "key_len": 0}
 
-        key = settings.lemonsqueezy_api_key
+        key = settings.lemonsqueezy_api_key.strip()
         result = {
             "key_prefix": key[:40],
             "key_suffix": key[-20:],

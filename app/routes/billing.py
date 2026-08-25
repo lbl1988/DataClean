@@ -78,6 +78,30 @@ async def checkout(plan: str = Query(...), token: str = Query(...)):
     return {"checkout_url": checkout_url}
 
 
+@router.get("/test-lsq")
+async def test_lsq():
+    """测试 LemonSqueezy API 连通性。"""
+    if not settings.lemonsqueezy_api_key:
+        return {"error": "LEMONSQUEEZY_API_KEY not set"}
+
+    key = settings.lemonsqueezy_api_key
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        resp = await client.get(
+            "https://api.lemonsqueezy.com/v1/products",
+            headers={
+                "Authorization": f"Bearer {key}",
+                "Accept": "application/vnd.api+json",
+            },
+        )
+    return {
+        "key_prefix": key[:40],
+        "key_suffix": key[-20:],
+        "key_length": len(key),
+        "lsq_status": resp.status_code,
+        "lsq_response": resp.text[:300] if resp.status_code != 200 else "OK",
+    }
+
+
 @router.get("/balance")
 async def get_balance_api(token: str = Query(...)):
     """查询当前用户额度和套餐。"""

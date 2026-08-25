@@ -69,7 +69,7 @@ async def checkout(plan: str = Query(...), token: str = Query(...)):
         )
 
     if resp.status_code not in (200, 201):
-        raise HTTPException(500, f"创建支付订单失败: {resp.status_code}")
+        raise HTTPException(500, f"创建支付订单失败: {resp.status_code} - {resp.text[:300]}")
 
     data = resp.json()
     checkout_url = data.get("data", {}).get("attributes", {}).get("url")

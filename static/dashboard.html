@@ -211,34 +211,34 @@ resp = requests.post(<span class="s">"</span><span id="apiUrl">/v1/dedup</span><
           <div class="card-header"><h2>购买额度</h2></div>
           <div class="pricing-grid" style="margin-top:0">
             <div class="pricing-card">
+              <h3>Starter 包</h3>
+              <div class="price">¥19<span>/5K次</span></div>
+              <ul>
+                <li>5,000 次调用</li>
+                <li>10 QPS 限流</li>
+                <li>即时生效</li>
+              </ul>
+              <button class="btn btn-primary" style="width:100%" onclick="buyCredits('starter')">购买</button>
+            </div>
+            <div class="pricing-card featured">
               <h3>Pro 包</h3>
               <div class="price">¥49<span>/10K次</span></div>
               <ul>
                 <li>10,000 次调用</li>
                 <li>30 QPS 限流</li>
-                <li>即时生效</li>
+                <li>邮件支持</li>
               </ul>
               <button class="btn btn-primary" style="width:100%" onclick="buyCredits('pro')">购买</button>
             </div>
-            <div class="pricing-card featured">
+            <div class="pricing-card">
               <h3>Business 包</h3>
-              <div class="price">¥199<span>/50K次</span></div>
+              <div class="price">¥149<span>/50K次</span></div>
               <ul>
                 <li>50,000 次调用</li>
                 <li>50 QPS 限流</li>
                 <li>优先支持</li>
               </ul>
               <button class="btn btn-primary" style="width:100%" onclick="buyCredits('business')">购买</button>
-            </div>
-            <div class="pricing-card">
-              <h3>Enterprise 包</h3>
-              <div class="price">¥399<span>/200K次</span></div>
-              <ul>
-                <li>200,000 次调用</li>
-                <li>100 QPS 限流</li>
-                <li>SLA 保障</li>
-              </ul>
-              <button class="btn btn-primary" style="width:100%" onclick="buyCredits('enterprise')">购买</button>
             </div>
           </div>
         </div>

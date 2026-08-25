@@ -6,9 +6,9 @@ from ..db.database import get_db
 router = APIRouter(prefix="/v1/billing")
 
 PLAN_VARIANTS = {
-    "pro": {"variant_id": "2051277", "credits": 10000, "price": 49},
-    "business": {"variant_id": "2051278", "credits": 50000, "price": 199},
-    "enterprise": {"variant_id": "2051279", "credits": 200000, "price": 399},
+    "starter": {"variant_id": "2051245", "credits": 5000, "price": 19},
+    "pro": {"variant_id": "2051251", "credits": 10000, "price": 49},
+    "business": {"variant_id": "2051252", "credits": 50000, "price": 149},
 }
 
 

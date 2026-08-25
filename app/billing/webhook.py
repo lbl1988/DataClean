@@ -16,9 +16,9 @@ PLAN_CREDITS = {
 }
 
 VARIANT_PLAN_MAP = {
-    "2051277": "pro",
-    "2051278": "business",
-    "2051279": "enterprise",
+    "2051245": "starter",
+    "2051251": "pro",
+    "2051252": "business",
 }
 
 

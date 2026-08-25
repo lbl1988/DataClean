@@ -3,9 +3,9 @@ from typing import Optional
 
 PLAN_CREDITS = {
     "free": 1000,
-    "starter": 10000,
-    "pro": 50000,
-    "business": 200000,
+    "pro": 10000,
+    "business": 50000,
+    "enterprise": 200000,
 }
 
 

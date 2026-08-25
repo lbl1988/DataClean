@@ -588,12 +588,24 @@ async function runPlayground() {
 
 // Billing
 async function buyCredits(plan) {
-  showToast('正在跳转到支付页面...', 'success');
-  const checkoutUrl = `${location.origin}/v1/billing/checkout?plan=${plan}&token=${api.token}`;
-  // In production, this would redirect to LemonSqueezy checkout
-  setTimeout(() => {
-    showToast('支付功能开发中，敬请期待', 'error');
-  }, 1500);
+  showToast('正在创建支付订单...', 'success');
+  try {
+    const resp = await fetch(`${api.baseURL}/billing/checkout?plan=${plan}&token=${api.token}`);
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({ detail: resp.statusText }));
+      let msg = typeof err.detail === 'string' ? err.detail : JSON.stringify(err.detail);
+      showToast(msg, 'error');
+      return;
+    }
+    const data = await resp.json();
+    if (data.checkout_url) {
+      window.location.href = data.checkout_url;
+    } else {
+      showToast('未获取到支付链接', 'error');
+    }
+  } catch (e) {
+    showToast('支付请求失败: ' + e.message, 'error');
+  }
 }
 
 // Init

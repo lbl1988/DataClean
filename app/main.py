@@ -13,7 +13,7 @@ from .routes import afdian_webhook
 static_dir = Path(__file__).parent.parent / "static"
 assets_dir = Path(__file__).parent.parent / "assets"
 
-app = FastAPI(...
+app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
     description="数据清洗API — 去重、标准化、验证，一键全流程。",

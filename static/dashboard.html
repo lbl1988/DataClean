@@ -315,18 +315,25 @@ resp = requests.post(<span class="s">"</span><span id="apiUrl">/v1/dedup</span><
           <div style="background:var(--bg-card);border-radius:16px;padding:32px;max-width:500px;width:90%;text-align:center;">
             <h3 id="afdianTitle" style="margin:0 0 8px;font-size:20px;"></h3>
             <p id="afdianDesc" style="margin:0 0 20px;color:var(--text-secondary);font-size:14px;"></p>
-            <p style="margin:0 0 16px;color:var(--text-secondary);font-size:13px;">请使用微信或支付宝扫描下方二维码支付</p>
-            <div style="display:flex;gap:20px;justify-content:center;margin-bottom:20px;">
-              <div style="background:white;border-radius:12px;padding:16px;text-align:center;">
-                <img src="/assets/wechat.jpg" alt="微信收款码" style="width:180px;height:180px;display:block;border-radius:8px;">
-                <p style="margin:8px 0 0;color:#07C160;font-size:14px;font-weight:600;">微信支付</p>
+            <p style="margin:0 0 12px;color:var(--text-secondary);font-size:13px;">请使用微信或支付宝扫描下方二维码支付</p>
+            <div style="display:flex;gap:20px;justify-content:center;margin-bottom:16px;">
+              <div style="background:white;border-radius:12px;padding:12px;text-align:center;">
+                <img src="/assets/wechat.jpg" alt="微信收款码" style="width:160px;height:160px;display:block;border-radius:8px;">
+                <p style="margin:6px 0 0;color:#07C160;font-size:13px;font-weight:600;">微信支付</p>
               </div>
-              <div style="background:white;border-radius:12px;padding:16px;text-align:center;">
-                <img src="/assets/alipay.jpg" alt="支付宝收款码" style="width:180px;height:180px;display:block;border-radius:8px;">
-                <p style="margin:8px 0 0;color:#1677FF;font-size:14px;font-weight:600;">支付宝</p>
+              <div style="background:white;border-radius:12px;padding:12px;text-align:center;">
+                <img src="/assets/alipay.jpg" alt="支付宝收款码" style="width:160px;height:160px;display:block;border-radius:8px;">
+                <p style="margin:6px 0 0;color:#1677FF;font-size:13px;font-weight:600;">支付宝</p>
               </div>
             </div>
-            <p id="afdianOrderId" style="margin:0 0 16px;color:var(--text-secondary);font-size:13px;line-height:1.5;"></p>
+            <div style="background:var(--bg-secondary);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-family:monospace;font-size:14px;">
+              <span style="color:var(--text-secondary);">支付验证码：</span>
+              <span id="afdianVerifyCode" style="color:var(--accent);font-weight:700;letter-spacing:2px;"></span>
+            </div>
+            <p id="afdianOrderId" style="margin:0 0 12px;color:var(--text-secondary);font-size:13px;line-height:1.5;"></p>
+            <div style="display:flex;gap:8px;margin-bottom:12px;">
+              <input id="afdianVerifyInput" type="text" maxlength="4" placeholder="请输入验证码" style="flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-secondary);color:var(--text-primary);font-size:14px;text-align:center;letter-spacing:2px;">
+            </div>
             <button id="afdianCheckBtn" class="plan-btn" onclick="confirmAFDianPayment()" style="width:100%;padding:12px;border:none;border-radius:10px;background:linear-gradient(135deg,#10B981,#059669);color:white;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:8px;">我已完成支付</button>
             <button onclick="closeAFDianModal()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:transparent;color:var(--text-secondary);font-size:14px;cursor:pointer;">取消</button>
           </div>
@@ -703,10 +710,15 @@ function openAFDianModal() {
     business: { title: 'Business 套餐 ¥149', credits: '50,000 次 API 调用' },
   }[plan];
 
+  const verifyCode = String(Math.floor(1000 + Math.random() * 9000));
+  
   document.getElementById('afdianTitle').textContent = planInfo.title;
   document.getElementById('afdianDesc').textContent = planInfo.credits;
-  document.getElementById('afdianOrderId').textContent = `支付金额：${planInfo.title.split('¥')[1]}`;
+  document.getElementById('afdianOrderId').textContent = `支付金额：¥${planInfo.title.split('¥')[1]}  ·  请截图保存支付凭证`;
+  document.getElementById('afdianVerifyCode').textContent = verifyCode;
+  document.getElementById('afdianVerifyInput').value = '';
   document.getElementById('afdianModal').dataset.plan = plan;
+  document.getElementById('afdianModal').dataset.verifyCode = verifyCode;
   document.getElementById('afdianModal').style.display = 'flex';
 }
 
@@ -717,7 +729,20 @@ function closeAFDianModal() {
 async function confirmAFDianPayment() {
   const modal = document.getElementById('afdianModal');
   const plan = modal.dataset.plan;
+  const correctCode = modal.dataset.verifyCode;
   if (!plan) return;
+
+  const inputCode = document.getElementById('afdianVerifyInput').value.trim();
+  
+  if (!inputCode) {
+    showToast('请输入支付验证码', 'error');
+    return;
+  }
+  
+  if (inputCode !== correctCode) {
+    showToast('验证码错误，请重新输入', 'error');
+    return;
+  }
 
   const btn = document.getElementById('afdianCheckBtn');
   btn.disabled = true;

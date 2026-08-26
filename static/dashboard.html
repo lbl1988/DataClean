@@ -195,51 +195,118 @@ resp = requests.post(<span class="s">"</span><span id="apiUrl">/v1/dedup</span><
       <!-- Billing Tab -->
       <div class="tab-content" id="tab-billing">
         <div class="dash-header">
-          <h1>计费管理</h1>
+          <h1>计费中心</h1>
         </div>
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="label">当前套餐</div>
-            <div class="value" id="billingPlan">—</div>
-          </div>
-          <div class="stat-card">
-            <div class="label">剩余额度</div>
-            <div class="value" id="billingCredits">—</div>
+
+        <!-- Balance Hero Card -->
+        <div class="billing-hero">
+          <div class="billing-hero-content">
+            <div class="billing-hero-left">
+              <div class="hero-label">当前可用额度</div>
+              <div class="hero-credits" id="heroCredits">—<span> 次</span></div>
+              <div class="hero-plan" id="heroPlan">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                <span id="heroPlanName">免费版</span>
+              </div>
+            </div>
+            <div class="billing-hero-right">
+              <div class="hero-total">累计总额度</div>
+              <div class="hero-total-value" id="heroTotal">—</div>
+            </div>
           </div>
         </div>
-        <div class="card">
-          <div class="card-header"><h2>购买额度</h2></div>
-          <div class="pricing-grid" style="margin-top:0">
-            <div class="pricing-card">
-              <h3>Starter 包</h3>
-              <div class="price">¥19<span>/5K次</span></div>
-              <ul>
-                <li>5,000 次调用</li>
-                <li>10 QPS 限流</li>
-                <li>即时生效</li>
-              </ul>
-              <button class="btn btn-primary" style="width:100%" onclick="buyCredits('starter')">购买</button>
+
+        <!-- AML Notice -->
+        <div class="billing-notice">
+          <div class="billing-notice-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <div class="billing-notice-content">
+            <h4>合规声明与反洗钱 (AML) 提示</h4>
+            <p>请确保您的支付资金来源合法，严禁使用信用卡套现、虚假交易等方式充值。所有交易均会被监控，异常交易可能导致账户冻结。详细条款请查看 <a href="/SUPPORT.md" target="_blank">SUPPORT.md</a>。</p>
+          </div>
+        </div>
+
+        <!-- Plan Cards -->
+        <div class="billing-section-title">
+          <h2>选择套餐</h2>
+          <span class="badge-new">限时优惠</span>
+        </div>
+
+        <div class="billing-plans">
+          <div class="billing-plan-card" data-plan="starter" onclick="selectPlan('starter')">
+            <div class="plan-name">Starter</div>
+            <div class="plan-desc">适合个人开发者</div>
+            <div class="plan-price">
+              <span class="amount">¥19</span>
+              <span class="unit">/ 5,000 次</span>
             </div>
-            <div class="pricing-card featured">
-              <h3>Pro 包</h3>
-              <div class="price">¥49<span>/10K次</span></div>
-              <ul>
-                <li>10,000 次调用</li>
-                <li>30 QPS 限流</li>
-                <li>邮件支持</li>
-              </ul>
-              <button class="btn btn-primary" style="width:100%" onclick="buyCredits('pro')">购买</button>
+            <ul class="plan-features">
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>5,000 次 API 调用</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>10 QPS 限流</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>即时生效</li>
+            </ul>
+            <button class="plan-btn" onclick="event.stopPropagation(); buyCredits('starter')">立即购买</button>
+          </div>
+
+          <div class="billing-plan-card featured selected" data-plan="pro" onclick="selectPlan('pro')">
+            <div class="plan-badge">最受欢迎</div>
+            <div class="plan-name">Pro</div>
+            <div class="plan-desc">适合小型团队</div>
+            <div class="plan-price">
+              <span class="amount">¥49</span>
+              <span class="unit">/ 10,000 次</span>
             </div>
-            <div class="pricing-card">
-              <h3>Business 包</h3>
-              <div class="price">¥149<span>/50K次</span></div>
-              <ul>
-                <li>50,000 次调用</li>
-                <li>50 QPS 限流</li>
-                <li>优先支持</li>
-              </ul>
-              <button class="btn btn-primary" style="width:100%" onclick="buyCredits('business')">购买</button>
+            <ul class="plan-features">
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>10,000 次 API 调用</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>30 QPS 限流</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>邮件优先支持</li>
+            </ul>
+            <button class="plan-btn" onclick="event.stopPropagation(); buyCredits('pro')">立即购买</button>
+          </div>
+
+          <div class="billing-plan-card" data-plan="business" onclick="selectPlan('business')">
+            <div class="plan-name">Business</div>
+            <div class="plan-desc">适合企业使用</div>
+            <div class="plan-price">
+              <span class="amount">¥149</span>
+              <span class="unit">/ 50,000 次</span>
             </div>
+            <ul class="plan-features">
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>50,000 次 API 调用</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>50 QPS 限流</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>7x24 优先支持</li>
+            </ul>
+            <button class="plan-btn" onclick="event.stopPropagation(); buyCredits('business')">立即购买</button>
+          </div>
+        </div>
+
+        <!-- Payment Methods -->
+        <div class="billing-payment-methods">
+          <h3>支付方式</h3>
+          <div class="payment-method">
+            <div class="payment-method-info">
+              <div class="payment-method-icon card">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              </div>
+              <div>
+                <div class="payment-method-name">信用卡 / 借记卡</div>
+                <div class="payment-method-desc">通过 LemonSqueezy 安全支付 · 支持 Visa / Mastercard / 银联</div>
+              </div>
+            </div>
+            <span class="payment-method-tag active">可用</span>
+          </div>
+          <div class="payment-method">
+            <div class="payment-method-info">
+              <div class="payment-method-icon wechat">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 01.213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 00.167-.054l1.903-1.114a.864.864 0 01.717-.098 10.16 10.16 0 002.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.59-3.54-4.496-6.314-9.596-6.314z"/></svg>
+              </div>
+              <div>
+                <div class="payment-method-name">微信支付 / 支付宝</div>
+                <div class="payment-method-desc">个人收款 · 扫码支付 · 请查看 <a href="/SUPPORT.md" target="_blank" style="color:var(--primary-light)">SUPPORT.md</a></div>
+              </div>
+            </div>
+            <span class="payment-method-tag active">可用</span>
           </div>
         </div>
       </div>
@@ -371,8 +438,9 @@ async function loadOverview(user) {
     document.getElementById('statPlan').textContent = planMap[user.plan] || user.plan || '—';
     const qpsMap = { free: 2, starter: 10, pro: 30, business: 50 };
     document.getElementById('statQps').textContent = qpsMap[user.plan] || 2;
-    document.getElementById('billingPlan').textContent = planMap[user.plan] || user.plan || '—';
-    document.getElementById('billingCredits').textContent = (user.credits_remaining ?? 0).toLocaleString();
+    document.getElementById('heroCredits').innerHTML = (user.credits_remaining ?? 0).toLocaleString() + '<span> 次</span>';
+    document.getElementById('heroTotal').textContent = (user.credits_total ?? 0).toLocaleString();
+    document.getElementById('heroPlanName').textContent = planMap[user.plan] || user.plan || '免费版';
   }
 }
 
@@ -385,6 +453,7 @@ function showTab(name) {
   if (name === 'overview') loadOverview(api.user);
   if (name === 'keys') loadKeys();
   if (name === 'playground') { checkApiKey(); initPlayground(); }
+  if (name === 'billing') { if (api.user) loadOverview(api.user); }
 }
 
 // API Keys
@@ -588,6 +657,14 @@ async function runPlayground() {
 
 // Billing
 let billingLoading = false;
+
+function selectPlan(plan) {
+  document.querySelectorAll('.billing-plan-card').forEach(card => {
+    card.classList.remove('selected');
+  });
+  const card = document.querySelector(`.billing-plan-card[data-plan="${plan}"]`);
+  if (card) card.classList.add('selected');
+}
 
 async function buyCredits(plan) {
   if (billingLoading) return;

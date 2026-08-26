@@ -38,7 +38,7 @@ async def afdian_checkout(plan: str = Query(...), token: str = Query(...)):
     user = user_resp.data[0]
     plan_info = AFDIAN_PLANS[plan]
 
-    afdian_url = f"https://afdian.net/a/{settings.afdian_user_id}"
+    afdian_url = f"https://afdian.com/u/{settings.afdian_user_id}"
 
     return {
         "afdian_url": afdian_url,

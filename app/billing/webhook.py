@@ -10,6 +10,7 @@ router = APIRouter()
 
 PLAN_CREDITS = {
     "free": 1000,
+    "starter": 5000,
     "pro": 10000,
     "business": 50000,
     "enterprise": 200000,
@@ -19,6 +20,7 @@ VARIANT_PLAN_MAP = {
     "2051245": "starter",
     "2051251": "pro",
     "2051252": "business",
+    "2051253": "enterprise",
 }
 
 

@@ -98,6 +98,13 @@ NOTIFY pgrst, 'reload schema';
 | `/v1/keys` | POST | 创建新 API Key |
 | `/v1/keys/{id}` | DELETE | 吊销 API Key |
 
+### 计费管理（需要 Auth Token）
+
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| `/v1/billing/checkout` | GET | 创建 LemonSqueezy 结账并返回支付链接（`?plan=starter\|pro\|business\|enterprise&token=xxx`） |
+| `/v1/billing/balance` | GET | 查询当前用户额度与套餐（`?token=xxx`） |
+
 ### 数据清洗（需要 API Key）
 
 | 接口 | 方法 | 说明 |
@@ -111,7 +118,8 @@ NOTIFY pgrst, 'reload schema';
 | 接口 | 方法 | 说明 |
 |------|------|------|
 | `/health` | GET | 健康检查 |
-| `/debug` | GET | 调试信息 |
+| `/api-info` | GET | 服务信息与端点目录 |
+| `/debug` | GET | 调试信息（环境/数据库状态） |
 | `/webhook/lemonsqueezy` | POST | LemonSqueezy 支付回调 |
 
 ## 鉴权
@@ -185,8 +193,9 @@ resp = requests.post(f"{BASE}/v1/clean", json=data, headers=HEADERS)
 | 套餐 | 价格 | 调用量 | QPS |
 |------|------|--------|-----|
 | Free | ¥0 | 1,000 次 | 2/s |
+| Starter | ¥19 | 5,000 次 | 5/s |
 | Pro | ¥49 | 10,000 次 | 30/s |
-| Business | ¥199 | 50,000 次 | 50/s |
+| Business | ¥149 | 50,000 次 | 50/s |
 | Enterprise | ¥399 | 200,000 次/月 | 100/s |
 
 注册即送 1,000 次免费调用，无需信用卡。
@@ -196,7 +205,7 @@ resp = requests.post(f"{BASE}/v1/clean", json=data, headers=HEADERS)
 ```
 DataClean/
 ├── app/
-│   ├── main.py                # FastAPI 入口 + 静态文件服务
+│   ├── main.py                # FastAPI 入口 + 静态文件服务 + /api-info
 │   ├── config.py              # 环境变量配置
 │   ├── core/                  # 核心算法
 │   │   ├── dedup_exact.py     # 精确去重（MD5）
@@ -204,12 +213,13 @@ DataClean/
 │   │   ├── standardizer.py    # 标准化引擎
 │   │   └── validator.py       # 邮箱验证（MX 查询）
 │   ├── routes/                # API 路由
-│   │   ├── auth.py            # 注册/登录
+│   │   ├── auth.py            # 注册/登录/me
 │   │   ├── api_keys.py        # API Key 管理
+│   │   ├── billing.py         # 计费（结账/额度查询）
 │   │   ├── dedup.py           # 去重
 │   │   ├── standardize.py     # 标准化
 │   │   ├── clean.py           # 全流程清洗
-│   │   └── health.py          # 健康检查 + 调试
+│   │   └── health.py          # 健康检查 + 调试 + test-db
 │   ├── middleware/            # 中间件
 │   │   ├── auth.py            # API Key 鉴权
 │   │   └── rate_limit.py      # Redis 限流
@@ -219,22 +229,41 @@ DataClean/
 │   │   ├── database.py        # Supabase 客户端
 │   │   └── queries.py         # 数据库查询
 │   └── billing/
-│       ├── credits.py         # 额度管理
+│       ├── credits.py         # 额度管理（add_credits / update_plan）
 │       └── webhook.py         # LemonSqueezy 回调
 ├── static/                    # 前端
 │   ├── index.html             # 落地页
 │   ├── dashboard.html         # 控制台
 │   ├── css/style.css          # 样式
 │   └── js/api.js              # API 客户端
+├── docs/                      # 文档（Mintlify）
+│   ├── introduction.mdx
+│   ├── quickstart.mdx
+│   └── mint.json
 ├── sql/                       # 数据库
 │   ├── schema.sql             # 基础表
 │   └── schema_v2.sql          # 用户系统表
 ├── examples/                  # 示例代码
-├── tests/                     # 测试
+│   ├── python_example.py
+│   ├── javascript_example.js
+│   └── curl_example.sh
+├── test_data/                 # 测试数据
+│   └── dirty_data.json
+├── tests/                     # 单元/集成测试
+│   ├── test_dedup.py
+│   ├── test_standardizer.py
+│   ├── test_validator.py
+│   └── test_e2e.py
 ├── Dockerfile
 ├── docker-entrypoint.sh
+├── render.yaml
 ├── requirements.txt
-└── render.yaml
+├── runtime.txt                # Render Python 版本
+├── LAUNCH.md                  # 上线清单
+├── run_api_test.py            # API 自测脚本
+├── test_clean.py              # 清洗流程测试
+├── test_user_system.py        # 用户系统测试
+└── test_webhook.py            # Webhook 测试
 ```
 
 ## 部署
@@ -269,6 +298,11 @@ docker run -p 8000:8000 --env-file .env dataclean-api
 - Supabase 项目（PostgreSQL）
 - Upstash Redis（限流）
 - LemonSqueezy 账号（支付，可选）
+
+## 支持项目
+
+如果本项目对您有帮助，欢迎您的支持！
+[支持与赞助 (微信/支付宝)](./SUPPORT.md)
 
 ## License
 

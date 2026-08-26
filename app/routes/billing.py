@@ -9,6 +9,7 @@ PLAN_VARIANTS = {
     "starter": {"variant_id": "2051245", "credits": 5000, "price": 19},
     "pro": {"variant_id": "2051251", "credits": 10000, "price": 49},
     "business": {"variant_id": "2051252", "credits": 50000, "price": 149},
+    "enterprise": {"variant_id": "2051253", "credits": 200000, "price": 399},
 }
 
 
@@ -16,7 +17,7 @@ PLAN_VARIANTS = {
 async def checkout(plan: str = Query(...), token: str = Query(...)):
     """创建 LemonSqueezy 结账页面并跳转。"""
     if plan not in PLAN_VARIANTS:
-        raise HTTPException(400, f"无效套餐: {plan}，可选: pro / business / enterprise")
+        raise HTTPException(400, f"无效套餐: {plan}，可选: starter / pro / business / enterprise")
 
     if not settings.lemonsqueezy_api_key:
         raise HTTPException(500, "支付服务未配置，请联系管理员")

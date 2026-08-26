@@ -11,8 +11,9 @@ from .billing import webhook
 from .routes import afdian_webhook
 
 static_dir = Path(__file__).parent.parent / "static"
+assets_dir = Path(__file__).parent.parent / "assets"
 
-app = FastAPI(
+app = FastAPI(...
     title=settings.app_name,
     version=settings.app_version,
     description="数据清洗API — 去重、标准化、验证，一键全流程。",
@@ -31,6 +32,9 @@ app.add_middleware(
 if static_dir.exists():
     app.mount("/css", StaticFiles(directory=static_dir / "css"), name="css")
     app.mount("/js", StaticFiles(directory=static_dir / "js"), name="js")
+
+if assets_dir.exists():
+    app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
 
 prefix = settings.api_prefix
 

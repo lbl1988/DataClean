@@ -310,16 +310,23 @@ resp = requests.post(<span class="s">"</span><span id="apiUrl">/v1/dedup</span><
           </div>
         </div>
 
-        <!-- AFDian Payment Modal -->
+        <!-- Payment QR Code Modal -->
         <div id="afdianModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;justify-content:center;align-items:center;">
-          <div style="background:var(--bg-card);border-radius:16px;padding:32px;max-width:420px;width:90%;text-align:center;">
+          <div style="background:var(--bg-card);border-radius:16px;padding:32px;max-width:500px;width:90%;text-align:center;">
             <h3 id="afdianTitle" style="margin:0 0 8px;font-size:20px;"></h3>
             <p id="afdianDesc" style="margin:0 0 20px;color:var(--text-secondary);font-size:14px;"></p>
-            <div id="afdianQRCode" style="background:white;border-radius:12px;padding:16px;margin-bottom:16px;display:inline-block;">
-              <img id="afdianQRImg" src="" alt="爱发电支付二维码" style="width:220px;height:220px;display:block;">
+            <p style="margin:0 0 16px;color:var(--text-secondary);font-size:13px;">请使用微信或支付宝扫描下方二维码支付</p>
+            <div style="display:flex;gap:20px;justify-content:center;margin-bottom:20px;">
+              <div style="background:white;border-radius:12px;padding:16px;text-align:center;">
+                <img src="/assets/wechat.jpg" alt="微信收款码" style="width:180px;height:180px;display:block;border-radius:8px;">
+                <p style="margin:8px 0 0;color:#07C160;font-size:14px;font-weight:600;">微信支付</p>
+              </div>
+              <div style="background:white;border-radius:12px;padding:16px;text-align:center;">
+                <img src="/assets/alipay.jpg" alt="支付宝收款码" style="width:180px;height:180px;display:block;border-radius:8px;">
+                <p style="margin:8px 0 0;color:#1677FF;font-size:14px;font-weight:600;">支付宝</p>
+              </div>
             </div>
             <p id="afdianOrderId" style="margin:0 0 16px;color:var(--text-secondary);font-size:13px;line-height:1.5;"></p>
-            <button id="afdianOpenBtn" class="plan-btn" style="width:100%;padding:12px;border:none;border-radius:10px;background:linear-gradient(135deg,#EC4899,#DB2777);color:white;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:8px;">前往爱发电支付</button>
             <button id="afdianCheckBtn" class="plan-btn" onclick="confirmAFDianPayment()" style="width:100%;padding:12px;border:none;border-radius:10px;background:linear-gradient(135deg,#10B981,#059669);color:white;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:8px;">我已完成支付</button>
             <button onclick="closeAFDianModal()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:transparent;color:var(--text-secondary);font-size:14px;cursor:pointer;">取消</button>
           </div>
@@ -688,7 +695,7 @@ function getSelectedPlan() {
   return first ? first.dataset.plan : 'pro';
 }
 
-async function openAFDianModal() {
+function openAFDianModal() {
   const plan = getSelectedPlan();
   const planInfo = {
     starter: { title: 'Starter 套餐 ¥19', credits: '5,000 次 API 调用' },
@@ -696,45 +703,11 @@ async function openAFDianModal() {
     business: { title: 'Business 套餐 ¥149', credits: '50,000 次 API 调用' },
   }[plan];
 
-  showToast('正在获取支付链接...', 'success');
-
-  try {
-    const resp = await fetch(`${api.baseURL}/billing/afdian/checkout?plan=${plan}&token=${api.token}`);
-    if (!resp.ok) {
-      let msg = '获取支付链接失败';
-      try {
-        const err = await resp.json();
-        if (typeof err.detail === 'string') msg = err.detail;
-        else if (err.detail) msg = JSON.stringify(err.detail);
-      } catch {}
-      showToast(msg, 'error');
-      return;
-    }
-    const data = await resp.json();
-
-    document.getElementById('afdianTitle').textContent = planInfo.title;
-    document.getElementById('afdianDesc').textContent = planInfo.credits;
-
-    if (data.afdian_url) {
-      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(data.afdian_url)}`;
-      document.getElementById('afdianQRImg').src = qrUrl;
-    }
-    document.getElementById('afdianOrderId').textContent = data.message || '';
-    document.getElementById('afdianModal').dataset.plan = plan;
-    document.getElementById('afdianModal').dataset.afdianUrl = data.afdian_url || '';
-
-    const openBtn = document.getElementById('afdianOpenBtn');
-    if (openBtn) {
-      openBtn.onclick = () => {
-        const url = data.afdian_url;
-        if (url) window.open(url, '_blank');
-      };
-    }
-
-    document.getElementById('afdianModal').style.display = 'flex';
-  } catch (e) {
-    showToast('网络错误: ' + e.message, 'error');
-  }
+  document.getElementById('afdianTitle').textContent = planInfo.title;
+  document.getElementById('afdianDesc').textContent = planInfo.credits;
+  document.getElementById('afdianOrderId').textContent = `支付金额：${planInfo.title.split('¥')[1]}`;
+  document.getElementById('afdianModal').dataset.plan = plan;
+  document.getElementById('afdianModal').style.display = 'flex';
 }
 
 function closeAFDianModal() {

@@ -367,9 +367,9 @@ async function loadOverview(user) {
     document.getElementById('userPlan').textContent = (user.plan || 'free').toUpperCase() + ' 套餐';
     document.getElementById('statCredits').textContent = (user.credits_remaining ?? 0).toLocaleString();
     document.getElementById('statCreditsTotal').textContent = '总计 ' + (user.credits_total ?? 0).toLocaleString();
-    const planMap = { free: '免费版', starter: 'Starter 版', pro: 'Pro 版', business: 'Business 版', enterprise: 'Enterprise 版' };
+    const planMap = { free: '免费版', starter: 'Starter 版', pro: 'Pro 版', business: 'Business 版' };
     document.getElementById('statPlan').textContent = planMap[user.plan] || user.plan || '—';
-    const qpsMap = { free: 2, starter: 5, pro: 30, business: 50, enterprise: 100 };
+    const qpsMap = { free: 2, starter: 10, pro: 30, business: 50 };
     document.getElementById('statQps').textContent = qpsMap[user.plan] || 2;
     document.getElementById('billingPlan').textContent = planMap[user.plan] || user.plan || '—';
     document.getElementById('billingCredits').textContent = (user.credits_remaining ?? 0).toLocaleString();
@@ -587,24 +587,52 @@ async function runPlayground() {
 }
 
 // Billing
+let billingLoading = false;
+
 async function buyCredits(plan) {
-  showToast('正在创建支付订单...', 'success');
+  if (billingLoading) return;
+  billingLoading = true;
+
+  const planName = { starter: 'Starter', pro: 'Pro', business: 'Business' }[plan] || plan;
+  showToast(`正在创建 ${planName} 支付订单...`, 'success');
+
+  const buttons = document.querySelectorAll('.pricing-card .btn-primary');
+  buttons.forEach(b => { b.disabled = true; b.style.opacity = '0.6'; });
+
   try {
     const resp = await fetch(`${api.baseURL}/billing/checkout?plan=${plan}&token=${api.token}`);
     if (!resp.ok) {
-      const err = await resp.json().catch(() => ({ detail: resp.statusText }));
-      let msg = typeof err.detail === 'string' ? err.detail : JSON.stringify(err.detail);
+      let msg = '';
+      try {
+        const err = await resp.json();
+        if (typeof err.detail === 'string') {
+          msg = err.detail;
+        } else if (Array.isArray(err.detail)) {
+          msg = err.detail.map(e => e.msg || JSON.stringify(e)).join('; ');
+        } else if (err.detail) {
+          msg = JSON.stringify(err.detail);
+        } else {
+          msg = `服务器错误 (${resp.status})`;
+        }
+      } catch {
+        msg = `服务器错误 (${resp.status}): ${resp.statusText}`;
+      }
       showToast(msg, 'error');
       return;
     }
+
     const data = await resp.json();
     if (data.checkout_url) {
+      showToast('正在跳转到支付页面...', 'success');
       window.location.href = data.checkout_url;
     } else {
-      showToast('未获取到支付链接', 'error');
+      showToast('未获取到支付链接，请稍后重试', 'error');
     }
   } catch (e) {
-    showToast('支付请求失败: ' + e.message, 'error');
+    showToast('网络错误，请检查网络连接后重试: ' + (e.message || e), 'error');
+  } finally {
+    billingLoading = false;
+    buttons.forEach(b => { b.disabled = false; b.style.opacity = '1'; });
   }
 }
 

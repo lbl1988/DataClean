@@ -102,7 +102,7 @@ NOTIFY pgrst, 'reload schema';
 
 | 接口 | 方法 | 说明 |
 |------|------|------|
-| `/v1/billing/checkout` | GET | 创建 LemonSqueezy 结账并返回支付链接（`?plan=starter\|pro\|business\|enterprise&token=xxx`） |
+| `/v1/billing/checkout` | GET | 创建 LemonSqueezy 结账并返回支付链接（`?plan=starter\|pro\|business&token=xxx`） |
 | `/v1/billing/balance` | GET | 查询当前用户额度与套餐（`?token=xxx`） |
 
 ### 数据清洗（需要 API Key）
@@ -193,10 +193,9 @@ resp = requests.post(f"{BASE}/v1/clean", json=data, headers=HEADERS)
 | 套餐 | 价格 | 调用量 | QPS |
 |------|------|--------|-----|
 | Free | ¥0 | 1,000 次 | 2/s |
-| Starter | ¥19 | 5,000 次 | 5/s |
+| Starter | ¥19 | 5,000 次 | 10/s |
 | Pro | ¥49 | 10,000 次 | 30/s |
 | Business | ¥149 | 50,000 次 | 50/s |
-| Enterprise | ¥399 | 200,000 次/月 | 100/s |
 
 注册即送 1,000 次免费调用，无需信用卡。
 

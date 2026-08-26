@@ -6,7 +6,6 @@ PLAN_CREDITS = {
     "starter": 5000,
     "pro": 10000,
     "business": 50000,
-    "enterprise": 200000,
 }
 
 

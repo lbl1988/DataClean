@@ -102,9 +102,25 @@ async def checkout(plan: str = Query(...), token: str = Query(...)):
     if resp.status_code not in (200, 201):
         error_detail = resp.text[:500] if resp.text else "No response body"
         logger.error(f"LemonSqueezy API error: status={resp.status_code}, body={error_detail}")
+        try:
+            err_json = resp.json()
+            lsq_error = err_json.get("errors", [{}])
+            if lsq_error:
+                title = lsq_error[0].get("title", "")
+                detail = lsq_error[0].get("detail", "")
+                logger.error(f"LemonSqueezy error detail: title={title}, detail={detail}")
+                raise HTTPException(
+                    502,
+                    f"支付服务错误: {detail or title or '未知错误'} (状态码 {resp.status_code})。"
+                    f"可能原因：套餐 ID {variant_id} 不存在、API Key 无效或店铺 ID 不匹配。"
+                )
+        except Exception:
+            pass
         raise HTTPException(
             502,
-            f"创建支付订单失败 (状态码 {resp.status_code})。可能原因：套餐 ID {variant_id} 不存在、API Key 无效或店铺 ID 不匹配。请联系管理员检查 LemonSqueezy 配置。"
+            f"创建支付订单失败 (状态码 {resp.status_code})。"
+            f"可能原因：套餐 ID {variant_id} 不存在、API Key 无效或店铺 ID 不匹配。"
+            f"响应: {error_detail[:200]}"
         )
 
     data = resp.json()

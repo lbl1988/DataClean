@@ -312,15 +312,15 @@ resp = requests.post(<span class="s">"</span><span id="apiUrl">/v1/dedup</span><
 
         <!-- AFDian Payment Modal -->
         <div id="afdianModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;justify-content:center;align-items:center;">
-          <div style="background:var(--bg-card);border-radius:16px;padding:32px;max-width:400px;width:90%;text-align:center;">
+          <div style="background:var(--bg-card);border-radius:16px;padding:32px;max-width:420px;width:90%;text-align:center;">
             <h3 id="afdianTitle" style="margin:0 0 8px;font-size:20px;"></h3>
             <p id="afdianDesc" style="margin:0 0 20px;color:var(--text-secondary);font-size:14px;"></p>
             <div id="afdianQRCode" style="background:white;border-radius:12px;padding:16px;margin-bottom:16px;display:inline-block;">
-              <img id="afdianQRImg" src="" alt="支付二维码" style="width:220px;height:220px;display:block;">
+              <img id="afdianQRImg" src="" alt="爱发电支付二维码" style="width:220px;height:220px;display:block;">
             </div>
-            <p style="margin:0 0 8px;color:var(--text-secondary);font-size:13px;">请使用微信或支付宝扫描上方二维码</p>
-            <p id="afdianOrderId" style="margin:0 0 16px;color:var(--text-secondary);font-size:12px;"></p>
-            <button id="afdianCheckBtn" class="plan-btn" style="width:100%;padding:12px;border:none;border-radius:10px;background:linear-gradient(135deg,#10B981,#059669);color:white;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:8px;">我已完成支付</button>
+            <p id="afdianOrderId" style="margin:0 0 16px;color:var(--text-secondary);font-size:13px;line-height:1.5;"></p>
+            <button id="afdianOpenBtn" class="plan-btn" style="width:100%;padding:12px;border:none;border-radius:10px;background:linear-gradient(135deg,#EC4899,#DB2777);color:white;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:8px;">前往爱发电支付</button>
+            <button id="afdianCheckBtn" class="plan-btn" onclick="confirmAFDianPayment()" style="width:100%;padding:12px;border:none;border-radius:10px;background:linear-gradient(135deg,#10B981,#059669);color:white;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:8px;">我已完成支付</button>
             <button onclick="closeAFDianModal()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:transparent;color:var(--text-secondary);font-size:14px;cursor:pointer;">取消</button>
           </div>
         </div>
@@ -672,9 +672,6 @@ async function runPlayground() {
 
 // Billing
 let billingLoading = false;
-let afdianPollTimer = null;
-let afdianCurrentOrderId = null;
-let afdianCheckBtn = null;
 
 function selectPlan(plan) {
   document.querySelectorAll('.billing-plan-card').forEach(card => {
@@ -699,30 +696,42 @@ async function openAFDianModal() {
     business: { title: 'Business 套餐 ¥149', credits: '50,000 次 API 调用' },
   }[plan];
 
-  document.getElementById('afdianTitle').textContent = planInfo.title;
-  document.getElementById('afdianDesc').textContent = planInfo.credits;
-
-  showToast('正在创建支付订单...', 'success');
+  showToast('正在获取支付链接...', 'success');
 
   try {
     const resp = await fetch(`${api.baseURL}/billing/afdian/checkout?plan=${plan}&token=${api.token}`);
     if (!resp.ok) {
-      const err = await resp.json();
-      showToast(err.detail || '创建订单失败', 'error');
+      let msg = '获取支付链接失败';
+      try {
+        const err = await resp.json();
+        if (typeof err.detail === 'string') msg = err.detail;
+        else if (err.detail) msg = JSON.stringify(err.detail);
+      } catch {}
+      showToast(msg, 'error');
       return;
     }
     const data = await resp.json();
 
-    if (data.qr_code) {
-      document.getElementById('afdianQRImg').src = data.qr_code;
-    } else if (data.pay_url) {
-      document.getElementById('afdianQRImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(data.pay_url)}`;
+    document.getElementById('afdianTitle').textContent = planInfo.title;
+    document.getElementById('afdianDesc').textContent = planInfo.credits;
+
+    if (data.afdian_url) {
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(data.afdian_url)}`;
+      document.getElementById('afdianQRImg').src = qrUrl;
     }
-    document.getElementById('afdianOrderId').textContent = `订单号: ${data.order_id}`;
-    afdianCurrentOrderId = data.order_id;
+    document.getElementById('afdianOrderId').textContent = data.message || '';
+    document.getElementById('afdianModal').dataset.plan = plan;
+    document.getElementById('afdianModal').dataset.afdianUrl = data.afdian_url || '';
+
+    const openBtn = document.getElementById('afdianOpenBtn');
+    if (openBtn) {
+      openBtn.onclick = () => {
+        const url = data.afdian_url;
+        if (url) window.open(url, '_blank');
+      };
+    }
 
     document.getElementById('afdianModal').style.display = 'flex';
-    startAFDianPolling();
   } catch (e) {
     showToast('网络错误: ' + e.message, 'error');
   }
@@ -730,81 +739,46 @@ async function openAFDianModal() {
 
 function closeAFDianModal() {
   document.getElementById('afdianModal').style.display = 'none';
-  if (afdianPollTimer) {
-    clearInterval(afdianPollTimer);
-    afdianPollTimer = null;
-  }
-  afdianCurrentOrderId = null;
 }
 
-function startAFDianPolling() {
-  if (afdianPollTimer) clearInterval(afdianPollTimer);
+async function confirmAFDianPayment() {
+  const modal = document.getElementById('afdianModal');
+  const plan = modal.dataset.plan;
+  if (!plan) return;
 
-  afdianCheckBtn = document.getElementById('afdianCheckBtn');
-  afdianCheckBtn.disabled = true;
-  afdianCheckBtn.textContent = '等待支付中...';
+  const btn = document.getElementById('afdianCheckBtn');
+  btn.disabled = true;
+  btn.textContent = '确认中...';
 
-  afdianPollTimer = setInterval(async () => {
-    if (!afdianCurrentOrderId) {
-      clearInterval(afdianPollTimer);
+  try {
+    const resp = await fetch(`${api.baseURL}/billing/afdian/confirm?plan=${plan}&token=${api.token}`, { method: 'POST' });
+    if (!resp.ok) {
+      let msg = '确认失败';
+      try {
+        const err = await resp.json();
+        if (typeof err.detail === 'string') msg = err.detail;
+        else if (err.detail) msg = JSON.stringify(err.detail);
+      } catch {}
+      showToast(msg, 'error');
+      btn.disabled = false;
+      btn.textContent = '我已完成支付';
       return;
     }
-    try {
-      const resp = await fetch(`${api.baseURL}/billing/afdian/query?order_id=${afdianCurrentOrderId}`);
-      if (resp.ok) {
-        const data = await resp.json();
-        if (data.paid) {
-          clearInterval(afdianPollTimer);
-          afdianPollTimer = null;
-          showToast('支付成功！额度已到账', 'success');
-          closeAFDianModal();
-          loadOverview(api.user);
-          if (typeof api.getMe === 'function') {
-            const user = await api.getMe();
-            api.user = user;
-            loadOverview(user);
-          }
-        }
+    const data = await resp.json();
+    if (data.status === 'success') {
+      showToast(`支付成功！${data.credits_added.toLocaleString()} 次额度已到账`, 'success');
+      closeAFDianModal();
+      if (typeof api.getMe === 'function') {
+        const user = await api.getMe();
+        api.user = user;
+        loadOverview(user);
       }
-    } catch (e) {
-      console.error('Poll error:', e);
     }
-  }, 3000);
-
-  setTimeout(() => {
-    if (afdianCheckBtn) {
-      afdianCheckBtn.disabled = false;
-      afdianCheckBtn.textContent = '我已完成支付';
-      afdianCheckBtn.onclick = async () => {
-        if (!afdianCurrentOrderId) return;
-        afdianCheckBtn.disabled = true;
-        afdianCheckBtn.textContent = '确认中...';
-        try {
-          const resp = await fetch(`${api.baseURL}/billing/afdian/query?order_id=${afdianCurrentOrderId}`);
-          if (resp.ok) {
-            const data = await resp.json();
-            if (data.paid) {
-              showToast('支付成功！额度已到账', 'success');
-              closeAFDianModal();
-              if (typeof api.getMe === 'function') {
-                const user = await api.getMe();
-                api.user = user;
-                loadOverview(user);
-              }
-            } else {
-              showToast('支付尚未完成，请确认已支付后再点击', 'error');
-              afdianCheckBtn.disabled = false;
-              afdianCheckBtn.textContent = '我已完成支付';
-            }
-          }
-        } catch (e) {
-          showToast('网络错误', 'error');
-          afdianCheckBtn.disabled = false;
-          afdianCheckBtn.textContent = '我已完成支付';
-        }
-      };
-    }
-  }, 5000);
+  } catch (e) {
+    showToast('网络错误: ' + e.message, 'error');
+    btn.disabled = false;
+    btn.textContent = '我已完成支付';
+  }
 }
 
 async function buyCredits(plan) {

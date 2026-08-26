@@ -1,5 +1,3 @@
-import hmac
-import hashlib
 import json
 import logging
 from fastapi import APIRouter, Request, HTTPException
@@ -17,78 +15,103 @@ AFDIAN_PLAN_CREDITS = {
     "business": 50000,
 }
 
+AFDIAN_PLAN_PRICES = {
+    "starter": 19.00,
+    "pro": 49.00,
+    "business": 149.00,
+}
+
 
 @router.post("/webhook/afdian")
 async def afdian_webhook(request: Request):
-    """爱发电 Webhook 处理器。"""
+    """爱发电 Webhook 处理器。
+    
+    爱发电 Webhook 格式:
+    {
+      "ec": 200,
+      "em": "ok",
+      "data": {
+        "type": "order",
+        "order": {
+          "out_trade_no": "...",
+          "user_id": "...",
+          "plan_id": "...",
+          "total_amount": "5.00",
+          "status": 2,
+          ...
+        }
+      }
+    }
+    """
     body = await request.body()
-    signature = request.headers.get("x-signature", "")
-
-    if settings.afdian_webhook_secret:
-        expected = hmac.new(
-            settings.afdian_webhook_secret.encode(),
-            body,
-            hashlib.sha256,
-        ).hexdigest()
-        if not hmac.compare_digest(signature, expected):
-            raise HTTPException(401, "Invalid signature")
 
     try:
         data = json.loads(body)
     except json.JSONDecodeError:
         raise HTTPException(400, "Invalid JSON body")
 
-    event_type = data.get("type", "")
-    order_data = data.get("data", {})
-    order_id = order_data.get("order_id", "")
-    extra = order_data.get("extra", "")
+    event_data = data.get("data", {})
+    event_type = event_data.get("type", "")
 
-    if event_type not in ("order.paid", "order.refunded"):
-        return {"status": "ignored", "event_type": event_type}
+    if event_type != "order":
+        return {"ec": 200, "em": "ok"}
+
+    order = event_data.get("order", {})
+    out_trade_no = order.get("out_trade_no", "")
+    user_id = order.get("user_id", "")
+    plan_id = order.get("plan_id", "")
+    status = order.get("status", 0)
+    total_amount = float(order.get("total_amount", 0))
+
+    if status != 2:
+        logger.info(f"AFDian webhook: order {out_trade_no} status={status}, ignoring")
+        return {"ec": 200, "em": "ok"}
 
     from ..db.database import get_db
     db = get_db()
     if db is None:
-        return {"status": "database_unavailable"}
+        return {"ec": 500, "em": "database unavailable"}
 
     existing = (
         db.table("payments")
         .select("id")
-        .eq("afdian_order_id", order_id)
+        .eq("afdian_order_id", out_trade_no)
         .execute()
     )
     if existing.data:
-        return {"status": "already_processed"}
+        logger.info(f"AFDian webhook: order {out_trade_no} already processed")
+        return {"ec": 200, "em": "ok"}
 
-    user_id = None
-    plan = "free"
-    if extra:
-        for part in extra.split("&"):
-            if "=" in part:
-                key, value = part.split("=", 1)
-                if key == "user_id":
-                    user_id = value
-                elif key == "plan":
-                    plan = value
+    plan = _match_plan_by_amount(total_amount)
+    if plan == "free":
+        logger.warning(f"AFDian webhook: unknown amount {total_amount}, cannot match plan")
+        return {"ec": 200, "em": "ok"}
 
-    if event_type == "order.paid" and user_id:
-        credits = AFDIAN_PLAN_CREDITS.get(plan, 0)
-        if credits > 0:
-            await add_credits(user_id, credits)
-            await update_plan(user_id, plan)
+    credits = AFDIAN_PLAN_CREDITS.get(plan, 0)
 
-        db.table("payments").insert({
-            "user_id": user_id,
-            "afdian_order_id": order_id,
-            "amount": order_data.get("amount", 0),
-            "credits_purchased": AFDIAN_PLAN_CREDITS.get(plan, 0),
-            "plan": plan,
-            "status": "paid",
-        }).execute()
+    user_resp = db.table("users").select("id").eq("id", user_id).execute()
+    if not user_resp.data:
+        logger.warning(f"AFDian webhook: user {user_id} not found")
+        return {"ec": 200, "em": "user not found"}
 
-    elif event_type == "order.refunded" and user_id:
-        db.table("payments").update({
-            "status": "refunded",
-        }).eq("afdian_order_id", order_id).execute()
+    await add_credits(user_id, credits)
+    await update_plan(user_id, plan)
 
-    return {"status": "success", "order_id": order_id}
+    db.table("payments").insert({
+        "user_id": user_id,
+        "afdian_order_id": out_trade_no,
+        "amount": total_amount,
+        "credits_purchased": credits,
+        "plan": plan,
+        "status": "paid",
+    }).execute()
+
+    logger.info(f"AFDian webhook: order {out_trade_no} processed, plan={plan}, credits={credits}")
+    return {"ec": 200, "em": "ok"}
+
+
+def _match_plan_by_amount(amount: float) -> str:
+    for plan, price in AFDIAN_PLAN_PRICES.items():
+        if abs(amount - price) < 0.01:
+            return plan
+    return "free"

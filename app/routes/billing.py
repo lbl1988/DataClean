@@ -57,6 +57,9 @@ async def checkout(plan: str = Query(...), token: str = Query(...)):
                         "attributes": {
                             "checkout_data": {
                                 "email": user.get("email", ""),
+                                "billing_address": {
+                                    "country": "CN",
+                                },
                                 "custom": {
                                     "user_id": user["id"],
                                     "plan": plan,
@@ -64,6 +67,9 @@ async def checkout(plan: str = Query(...), token: str = Query(...)):
                             },
                             "product_options": {
                                 "redirect_url": "https://dataclean-x4jc.onrender.com/dashboard?tab=billing",
+                                "display": {
+                                    "show_checkout_receipt": True,
+                                },
                             },
                         },
                         "relationships": {

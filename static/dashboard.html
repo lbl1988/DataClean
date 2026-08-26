@@ -310,14 +310,6 @@ resp = requests.post(<span class="s">"</span><span id="apiUrl">/v1/dedup</span><
           </div>
         </div>
 
-        <!-- 管理员审核面板 -->
-        <div class="billing-payment-methods" style="margin-top:24px;">
-          <h3>🔧 管理员审核面板</h3>
-          <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">用户提交支付申请后，需在此审核通过才能发放额度</p>
-          <button onclick="loadPendingOrders()" style="padding:10px 20px;border:1px solid var(--border);border-radius:8px;background:var(--bg-secondary);color:var(--text-primary);font-weight:500;cursor:pointer;margin-bottom:16px;">刷新待审核订单</button>
-          <div id="adminOrdersList" style="min-height:100px;color:var(--text-secondary);">点击"刷新待审核订单"加载列表</div>
-        </div>
-
         <!-- Payment QR Code Modal -->
         <div id="afdianModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;justify-content:center;align-items:center;">
           <div style="background:var(--bg-card);border-radius:16px;padding:32px;max-width:500px;width:90%;text-align:center;">

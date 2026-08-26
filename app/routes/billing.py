@@ -44,6 +44,34 @@ async def checkout(plan: str = Query(...), token: str = Query(...)):
 
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
+            checkout_payload = {
+                "data": {
+                    "type": "checkouts",
+                    "attributes": {
+                        "checkout_data": {
+                            "email": user.get("email", ""),
+                        },
+                        "product_options": {
+                            "redirect_url": "https://dataclean-x4jc.onrender.com/dashboard?tab=billing",
+                        },
+                    },
+                    "relationships": {
+                        "store": {
+                            "data": {
+                                "type": "stores",
+                                "id": "458799",
+                            }
+                        },
+                        "variant": {
+                            "data": {
+                                "type": "variants",
+                                "id": variant_id,
+                            }
+                        },
+                    },
+                }
+            }
+            logger.info(f"Checkout payload: {checkout_payload}")
             resp = await client.post(
                 "https://api.lemonsqueezy.com/v1/checkouts",
                 headers={
@@ -51,43 +79,7 @@ async def checkout(plan: str = Query(...), token: str = Query(...)):
                     "Accept": "application/vnd.api+json",
                     "Content-Type": "application/vnd.api+json",
                 },
-                json={
-                    "data": {
-                        "type": "checkouts",
-                        "attributes": {
-                            "checkout_data": {
-                                "email": user.get("email", ""),
-                                "billing_address": {
-                                    "country": "CN",
-                                },
-                                "custom": {
-                                    "user_id": user["id"],
-                                    "plan": plan,
-                                },
-                            },
-                            "product_options": {
-                                "redirect_url": "https://dataclean-x4jc.onrender.com/dashboard?tab=billing",
-                                "display": {
-                                    "show_checkout_receipt": True,
-                                },
-                            },
-                        },
-                        "relationships": {
-                            "store": {
-                                "data": {
-                                    "type": "stores",
-                                    "id": "458799",
-                                }
-                            },
-                            "variant": {
-                                "data": {
-                                    "type": "variants",
-                                    "id": variant_id,
-                                }
-                            },
-                        },
-                    }
-                },
+                json=checkout_payload,
             )
     except httpx.ConnectError as e:
         logger.error(f"LemonSqueezy connection error: {e}")
@@ -104,16 +96,33 @@ async def checkout(plan: str = Query(...), token: str = Query(...)):
         logger.error(f"LemonSqueezy API error: status={resp.status_code}, body={error_detail}")
         try:
             err_json = resp.json()
-            lsq_error = err_json.get("errors", [{}])
-            if lsq_error:
-                title = lsq_error[0].get("title", "")
-                detail = lsq_error[0].get("detail", "")
-                logger.error(f"LemonSqueezy error detail: title={title}, detail={detail}")
-                raise HTTPException(
-                    502,
-                    f"支付服务错误: {detail or title or '未知错误'} (状态码 {resp.status_code})。"
-                    f"可能原因：套餐 ID {variant_id} 不存在、API Key 无效或店铺 ID 不匹配。"
-                )
+            lsq_errors = err_json.get("errors", [])
+            if lsq_errors:
+                err = lsq_errors[0]
+                title = err.get("title", "")
+                detail = err.get("detail", "")
+                source = err.get("source", {})
+                pointer = source.get("pointer", "")
+                logger.error(f"LemonSqueezy error: title={title}, detail={detail}, pointer={pointer}")
+                
+                field_hint = ""
+                if "custom" in pointer:
+                    field_hint = "自定义数据格式错误，请检查 custom 字段是否为有效的 JSON 对象"
+                elif "billing_address" in pointer:
+                    field_hint = "账单地址格式错误，请检查 billing_address 字段"
+                elif "email" in pointer:
+                    field_hint = "邮箱地址格式错误"
+                elif "variant" in pointer.lower():
+                    field_hint = "套餐 ID 无效或不存在"
+                
+                error_msg = f"支付服务错误: {detail or title or '未知错误'}"
+                if field_hint:
+                    error_msg += f" ({field_hint})"
+                error_msg += f" [状态码 {resp.status_code}]"
+                
+                raise HTTPException(502, error_msg)
+        except HTTPException:
+            raise
         except Exception:
             pass
         raise HTTPException(

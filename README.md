@@ -281,6 +281,9 @@ DataClean/
 | `LEMONSQUEEZY_API_KEY` | LemonSqueezy API Key |
 | `LEMONSQUEEZY_WEBHOOK_SECRET` | Webhook 签名密钥 |
 | `LEMONSQUEEZY_STORE_ID` | LemonSqueezy Store ID |
+| `AFDIAN_TOKEN` | 爱发电 API Token（国内微信/支付宝支付） |
+| `AFDIAN_USER_ID` | 爱发电用户 ID |
+| `AFDIAN_WEBHOOK_SECRET` | 爱发电 Webhook 签名密钥 |
 
 4. 部署，访问 `https://your-app.onrender.com`
 

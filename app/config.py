@@ -26,6 +26,11 @@ class Settings(BaseSettings):
     lemonsqueezy_webhook_secret: str = ""
     lemonsqueezy_store_id: str = ""
 
+    # AFDian (爱发电)
+    afdian_token: str = ""
+    afdian_user_id: str = ""
+    afdian_webhook_secret: str = ""
+
     # Security
     api_key_secret: str = "change-this"
     cors_origins: str = "http://localhost:3000"

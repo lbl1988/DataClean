@@ -294,19 +294,34 @@ resp = requests.post(<span class="s">"</span><span id="apiUrl">/v1/dedup</span><
                 <div class="payment-method-desc">通过 LemonSqueezy 安全支付 · 支持 Visa / Mastercard / 银联</div>
               </div>
             </div>
-            <span class="payment-method-tag active">可用</span>
+            <span class="payment-method-tag active">国际通用</span>
           </div>
-          <div class="payment-method">
+          <div class="payment-method" onclick="openAFDianModal()">
             <div class="payment-method-info">
               <div class="payment-method-icon wechat">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 01.213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 00.167-.054l1.903-1.114a.864.864 0 01.717-.098 10.16 10.16 0 002.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.59-3.54-4.496-6.314-9.596-6.314z"/></svg>
               </div>
               <div>
                 <div class="payment-method-name">微信支付 / 支付宝</div>
-                <div class="payment-method-desc">个人收款 · 扫码支付 · 请查看 <a href="/SUPPORT.md" target="_blank" style="color:var(--primary-light)">SUPPORT.md</a></div>
+                <div class="payment-method-desc">通过爱发电收款 · 扫码支付 · 国内用户推荐</div>
               </div>
             </div>
-            <span class="payment-method-tag active">可用</span>
+            <span class="payment-method-tag active">推荐</span>
+          </div>
+        </div>
+
+        <!-- AFDian Payment Modal -->
+        <div id="afdianModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;justify-content:center;align-items:center;">
+          <div style="background:var(--bg-card);border-radius:16px;padding:32px;max-width:400px;width:90%;text-align:center;">
+            <h3 id="afdianTitle" style="margin:0 0 8px;font-size:20px;"></h3>
+            <p id="afdianDesc" style="margin:0 0 20px;color:var(--text-secondary);font-size:14px;"></p>
+            <div id="afdianQRCode" style="background:white;border-radius:12px;padding:16px;margin-bottom:16px;display:inline-block;">
+              <img id="afdianQRImg" src="" alt="支付二维码" style="width:220px;height:220px;display:block;">
+            </div>
+            <p style="margin:0 0 8px;color:var(--text-secondary);font-size:13px;">请使用微信或支付宝扫描上方二维码</p>
+            <p id="afdianOrderId" style="margin:0 0 16px;color:var(--text-secondary);font-size:12px;"></p>
+            <button id="afdianCheckBtn" class="plan-btn" style="width:100%;padding:12px;border:none;border-radius:10px;background:linear-gradient(135deg,#10B981,#059669);color:white;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:8px;">我已完成支付</button>
+            <button onclick="closeAFDianModal()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:transparent;color:var(--text-secondary);font-size:14px;cursor:pointer;">取消</button>
           </div>
         </div>
       </div>
@@ -657,6 +672,9 @@ async function runPlayground() {
 
 // Billing
 let billingLoading = false;
+let afdianPollTimer = null;
+let afdianCurrentOrderId = null;
+let afdianCheckBtn = null;
 
 function selectPlan(plan) {
   document.querySelectorAll('.billing-plan-card').forEach(card => {
@@ -664,6 +682,129 @@ function selectPlan(plan) {
   });
   const card = document.querySelector(`.billing-plan-card[data-plan="${plan}"]`);
   if (card) card.classList.add('selected');
+}
+
+function getSelectedPlan() {
+  const selected = document.querySelector('.billing-plan-card.selected');
+  if (selected) return selected.dataset.plan;
+  const first = document.querySelector('.billing-plan-card');
+  return first ? first.dataset.plan : 'pro';
+}
+
+async function openAFDianModal() {
+  const plan = getSelectedPlan();
+  const planInfo = {
+    starter: { title: 'Starter 套餐 ¥19', credits: '5,000 次 API 调用' },
+    pro: { title: 'Pro 套餐 ¥49', credits: '10,000 次 API 调用' },
+    business: { title: 'Business 套餐 ¥149', credits: '50,000 次 API 调用' },
+  }[plan];
+
+  document.getElementById('afdianTitle').textContent = planInfo.title;
+  document.getElementById('afdianDesc').textContent = planInfo.credits;
+
+  showToast('正在创建支付订单...', 'success');
+
+  try {
+    const resp = await fetch(`${api.baseURL}/billing/afdian/checkout?plan=${plan}&token=${api.token}`);
+    if (!resp.ok) {
+      const err = await resp.json();
+      showToast(err.detail || '创建订单失败', 'error');
+      return;
+    }
+    const data = await resp.json();
+
+    if (data.qr_code) {
+      document.getElementById('afdianQRImg').src = data.qr_code;
+    } else if (data.pay_url) {
+      document.getElementById('afdianQRImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(data.pay_url)}`;
+    }
+    document.getElementById('afdianOrderId').textContent = `订单号: ${data.order_id}`;
+    afdianCurrentOrderId = data.order_id;
+
+    document.getElementById('afdianModal').style.display = 'flex';
+    startAFDianPolling();
+  } catch (e) {
+    showToast('网络错误: ' + e.message, 'error');
+  }
+}
+
+function closeAFDianModal() {
+  document.getElementById('afdianModal').style.display = 'none';
+  if (afdianPollTimer) {
+    clearInterval(afdianPollTimer);
+    afdianPollTimer = null;
+  }
+  afdianCurrentOrderId = null;
+}
+
+function startAFDianPolling() {
+  if (afdianPollTimer) clearInterval(afdianPollTimer);
+
+  afdianCheckBtn = document.getElementById('afdianCheckBtn');
+  afdianCheckBtn.disabled = true;
+  afdianCheckBtn.textContent = '等待支付中...';
+
+  afdianPollTimer = setInterval(async () => {
+    if (!afdianCurrentOrderId) {
+      clearInterval(afdianPollTimer);
+      return;
+    }
+    try {
+      const resp = await fetch(`${api.baseURL}/billing/afdian/query?order_id=${afdianCurrentOrderId}`);
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.paid) {
+          clearInterval(afdianPollTimer);
+          afdianPollTimer = null;
+          showToast('支付成功！额度已到账', 'success');
+          closeAFDianModal();
+          loadOverview(api.user);
+          if (typeof api.getMe === 'function') {
+            const user = await api.getMe();
+            api.user = user;
+            loadOverview(user);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Poll error:', e);
+    }
+  }, 3000);
+
+  setTimeout(() => {
+    if (afdianCheckBtn) {
+      afdianCheckBtn.disabled = false;
+      afdianCheckBtn.textContent = '我已完成支付';
+      afdianCheckBtn.onclick = async () => {
+        if (!afdianCurrentOrderId) return;
+        afdianCheckBtn.disabled = true;
+        afdianCheckBtn.textContent = '确认中...';
+        try {
+          const resp = await fetch(`${api.baseURL}/billing/afdian/query?order_id=${afdianCurrentOrderId}`);
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data.paid) {
+              showToast('支付成功！额度已到账', 'success');
+              closeAFDianModal();
+              if (typeof api.getMe === 'function') {
+                const user = await api.getMe();
+                api.user = user;
+                loadOverview(user);
+              }
+            } else {
+              showToast('支付尚未完成，请确认已支付后再点击', 'error');
+              afdianCheckBtn.disabled = false;
+              afdianCheckBtn.textContent = '我已完成支付';
+            }
+          }
+        } catch (e) {
+          showToast('网络错误', 'error');
+          afdianCheckBtn.disabled = false;
+          afdianCheckBtn.textContent = '我已完成支付';
+        }
+      };
+    }
+  }, 5000);
 }
 
 async function buyCredits(plan) {

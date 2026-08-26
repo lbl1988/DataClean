@@ -6,8 +6,9 @@ from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from .config import settings
-from .routes import dedup, standardize, clean, health, auth, api_keys, billing
+from .routes import dedup, standardize, clean, health, auth, api_keys, billing, afdian
 from .billing import webhook
+from .routes import afdian_webhook
 
 static_dir = Path(__file__).parent.parent / "static"
 
@@ -41,6 +42,8 @@ app.include_router(standardize.router, prefix=prefix, tags=["standardize"])
 app.include_router(clean.router, prefix=prefix, tags=["clean"])
 app.include_router(webhook.router, tags=["webhook"])
 app.include_router(billing.router, tags=["billing"])
+app.include_router(afdian.router, tags=["afdian"])
+app.include_router(afdian_webhook.router, tags=["afdian_webhook"])
 
 
 @app.get("/", response_class=HTMLResponse)

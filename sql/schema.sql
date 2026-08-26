@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS payments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id),
     lemonsqueezy_payment_id VARCHAR(255) UNIQUE,
+    afdian_order_id VARCHAR(255),
     amount DECIMAL(10, 2),
     credits_purchased INTEGER,
     plan VARCHAR(50),

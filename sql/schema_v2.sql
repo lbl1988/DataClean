@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS payments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     lemonsqueezy_payment_id TEXT UNIQUE,
+    afdian_order_id TEXT,
     amount DECIMAL(10,2) DEFAULT 0,
     credits_purchased INTEGER DEFAULT 0,
     plan TEXT,
